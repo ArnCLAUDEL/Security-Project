@@ -1,8 +1,8 @@
 package protocol;
 
-import io.MySerialisable;
+import io.MySerializable;
 
-public abstract class Message implements MySerialisable {
+public abstract class Message implements MySerializable {
 	private final byte flag;
 	
 	public Message(byte flag) {
