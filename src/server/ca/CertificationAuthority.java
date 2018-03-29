@@ -1,8 +1,8 @@
 package server.ca;
 
-import certificate.CertificationProvider;
-import certificate.CertificationStorer;
+import io.IOEntity;
+import protocol.NetworkWriter;
 
-public interface CertificationAuthority extends CertificationStorer, CertificationProvider {
+public interface CertificationAuthority extends IOEntity, CAProtocolHandler, NetworkWriter {
 	
 }

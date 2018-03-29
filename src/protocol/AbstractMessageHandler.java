@@ -1,11 +1,14 @@
 package protocol;
 
 import java.nio.BufferUnderflowException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import io.AbstractHandler;
+import protocol.message.Message;
 import util.Cheat;
+import util.Creator;
 import util.SerializerBuffer;
 
 /**
@@ -63,6 +66,14 @@ public abstract class AbstractMessageHandler extends AbstractHandler {
 			}
 		};
 	}
+	
+	protected <M extends Message, T> void handleMessage(SerializerBuffer serializerBuffer, Creator<M> messageCreator, T info, BiConsumer<T, M> handler) {
+		M message = messageCreator.init();
+		message.readFromBuff(serializerBuffer);
+		Cheat.LOGGER.log(Level.FINER, message + " received.");
+		handler.accept(info, message);
+	}
+	
 	
 	/**
 	 * Stops the handler and notify everyone waiting on the buffer.

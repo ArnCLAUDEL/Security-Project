@@ -1,7 +1,7 @@
-package server.ss;
+package service;
 
 import protocol.NonceGenerator;
 
 public interface ServiceProvider extends NonceGenerator {
-
+	
 }

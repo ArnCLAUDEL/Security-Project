@@ -15,6 +15,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.NoSuchElementException;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -37,7 +38,7 @@ public class SimpleCertificationStorer implements CertificationStorer {
 	@Override
 	public boolean storeCertificate(String alias, X509CertificateHolder holder) throws CertificateException, KeyStoreException {
 		X509Certificate certificate = new JcaX509CertificateConverter().getCertificate(holder);
-		store.setCertificateEntry(holder.getSubject().toString(), certificate);
+		store.setCertificateEntry(alias, certificate);
 		try {
 			save();
 		} catch (IOException | NoSuchAlgorithmException e) {
@@ -50,6 +51,8 @@ public class SimpleCertificationStorer implements CertificationStorer {
 	public X509CertificateHolder getCertificate(String alias)
 			throws KeyStoreException, CertificateEncodingException, IOException {
 		Certificate certificate = store.getCertificate(alias);
+		if(certificate == null)
+			throw new NoSuchElementException("Certificate for alias : " + alias + " not found");
 		return new X509CertificateHolder(certificate.getEncoded());
 	}
 	

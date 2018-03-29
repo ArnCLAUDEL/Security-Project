@@ -1,9 +1,12 @@
 package protocol;
 
+import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import protocol.message.Message;
 import util.Cheat;
 import util.SerializerBuffer;
 
@@ -33,11 +36,14 @@ public class AbstractProtocolHandler {
 	 */
 	protected final SerializerBuffer serializerBuffer;
 	
+	protected final NetworkWriter networkWriter;
+	
 	/**
 	 * Creates a new instance with a new dedicated {@link SerializerBuffer}.
 	 */
-	public AbstractProtocolHandler() {
+	public AbstractProtocolHandler(NetworkWriter networkWriter) {
 		this.serializerBuffer = new SerializerBuffer();
+		this.networkWriter = networkWriter;
 	}
 	
 	/**
@@ -68,6 +74,34 @@ public class AbstractProtocolHandler {
 	 */
 	protected void schedule(TimerTask task, long firstTime, long period) {
 		//new Timer().scheduleAtFixedRate(task, firstTime, period);
+	}
+	
+	private boolean send(SocketAddress address, SerializerBuffer serializerBuffer) {
+		try {
+			int nb = networkWriter.write(address, serializerBuffer);
+			Cheat.LOGGER.log(Level.FINEST, nb + " bytes sent.");
+			return true;
+		} catch (IOException e) {
+			Cheat.LOGGER.log(Level.WARNING, "Fail to send data.", e);
+			return false;
+		}
+	}
+	
+	private boolean send(SocketAddress address) {
+		return send(address, serializerBuffer);
+	}
+	
+	protected synchronized boolean send(SocketAddress address, Message message) {
+		Cheat.LOGGER.log(Level.FINE, "Sending message..");
+		serializerBuffer.clear();
+		serializerBuffer.put(message.getFlag());
+		message.writeToBuff(serializerBuffer);
+		serializerBuffer.flip();
+		if(send(address)) {
+			Cheat.LOGGER.log(Level.FINER, "Message " + message + " sent.");
+			return true;
+		}
+		return false;
 	}
 	
 }
