@@ -31,6 +31,13 @@ public class ClientTCPNetworkHandler extends AbstractTCPNetworkHandler implement
 		this.channelsAddress = new BiMap<>();
 		this.client = client;
 	}
+	
+	public void connect(SocketAddress address) throws IOException {
+		SocketChannel channel = SocketChannel.open(address);
+		addChannel(channel, SelectionKey.OP_READ);
+		SerializerBuffer serializerBuffer = getSerializerBuffer(channel);
+		register(channel, serializerBuffer);
+	}
 
 	@Override
 	protected void register(SocketChannel channel, SerializerBuffer buffer) {

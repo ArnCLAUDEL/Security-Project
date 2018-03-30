@@ -24,6 +24,7 @@ import certificate.ConnectedCertificationProtocolHandler;
 import certificate.NotConnectedCertificationProtocolHandler;
 import client.state.ConnectedClientProtocolHandler;
 import client.state.NotConnectedClientProtocolHandler;
+import io.AbstractKeyboardHandler;
 import protocol.message.AuthReply;
 import protocol.message.AuthRequest;
 import protocol.message.CertReply;
@@ -33,17 +34,21 @@ import protocol.message.service.file.ServiceFileReadRequest;
 import protocol.message.service.file.ServiceFileWriteReply;
 import protocol.message.service.file.ServiceFileWriteRequest;
 import util.Cheat;
+import util.SerializerBuffer;
 
 public class SimpleClient extends AbstractCertificatedEntity implements Client {
+	private final SocketAddress fileServiceAddress;
+	
 	private ClientProtocolHandler clientProtocolHandler;
 	private CertificationProtocolHandler certificationProtocolHandler;
 	private ClientUDPNetworkHandler networkHandlerUDP;
 	private ClientTCPNetworkHandler networkHandlerTCP;
 	
-	public SimpleClient(String name, String keyStoreAlias, SocketAddress localAddress, SocketAddress caAddress) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException {
+	public SimpleClient(String name, String keyStoreAlias, SocketAddress localAddress, SocketAddress caAddress, SocketAddress fileServiceAddress) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException {
 		super(name, keyStoreAlias, localAddress, caAddress);
 		this.clientProtocolHandler = new NotConnectedClientProtocolHandler();
 		this.certificationProtocolHandler = new NotConnectedCertificationProtocolHandler(storer);
+		this.fileServiceAddress = fileServiceAddress;
 	}
 	
 	@Override
@@ -54,6 +59,21 @@ public class SimpleClient extends AbstractCertificatedEntity implements Client {
 		String filename = "request_" + name;
 		applicant.saveCSR(request, filename);
 		sendAuthRequest(caAddress, new AuthRequest(filename, name));
+	}
+	
+	@Override
+	public void retrieveCertificate(String alias) {
+		sendCertRequest(caAddress, new CertRequest(alias));
+	}
+	
+	@Override
+	public void writeTo(String filename, String content) {
+		sendServiceFileWrite(fileServiceAddress, new ServiceFileWriteRequest(filename, content));
+	}
+	
+	@Override
+	public void readFrom(String filename) {
+		sendServiceFileRead(fileServiceAddress, new ServiceFileReadRequest(filename));
 	}
 	
 	@Override
@@ -76,11 +96,6 @@ public class SimpleClient extends AbstractCertificatedEntity implements Client {
 		clientProtocolHandler.handleServiceFileWrite(from, reply);
 	}
 
-	@Override
-	public void retrieveCertificate(String alias) {
-		certificationProtocolHandler.sendCertRequest(caAddress, new CertRequest(alias));
-	}
-	
 	@Override
 	public void sendAuthRequest(SocketAddress to, AuthRequest request) {
 		certificationProtocolHandler.sendAuthRequest(to, request);
@@ -116,11 +131,29 @@ public class SimpleClient extends AbstractCertificatedEntity implements Client {
 		networkHandlerTCP = new ClientTCPNetworkHandler(serverSocketChannel, this);
 		addHandler(networkHandlerTCP);
 		clientProtocolHandler = new ConnectedClientProtocolHandler(networkHandlerTCP);
+		final Client client = this;
+		networkHandlerTCP.connect(fileServiceAddress);
+		
+		addHandler(new AbstractKeyboardHandler() {
+			
+			@Override
+			protected void handle(SerializerBuffer serializerBuffer) throws IOException {
+				Cheat.LOGGER.log(Level.INFO, "Preparing writing..");
+				client.writeTo("test.txt", "Hello World");
+				Cheat.LOGGER.log(Level.INFO, "Writing sent..");
+				try {Thread.sleep(1000);}
+				catch (InterruptedException e) {}
+				Cheat.LOGGER.log(Level.INFO, "");
+				Cheat.LOGGER.log(Level.INFO, "Preparing reading..");
+				client.readFrom("test.txt");
+				Cheat.LOGGER.log(Level.INFO, "Reading sent..");
+			}
+		});
 	}
 	
 	public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, IOException, InvalidKeySpecException {
 		Cheat.setLoggerLevelDisplay(Level.ALL);
-		Client client = new SimpleClient("arnaud", "store_client", new InetSocketAddress(8889), new InetSocketAddress(8888));
+		Client client = new SimpleClient("arnaud", "store_client", new InetSocketAddress(8889), new InetSocketAddress(8888), new InetSocketAddress(8890));
 		new Thread(client).start();
 		client.makeCertificationRequest();
 	}
