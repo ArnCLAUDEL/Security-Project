@@ -1,4 +1,4 @@
-package server.ca;
+package certification;
 
 import io.IOEntity;
 import protocol.NetworkWriter;

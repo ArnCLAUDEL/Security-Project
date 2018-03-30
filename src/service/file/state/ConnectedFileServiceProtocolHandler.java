@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.logging.Level;
 
-import certificate.CertificationStorer;
+import certification.CertificationStorer;
 import protocol.NetworkWriter;
 import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;

@@ -1,4 +1,4 @@
-package certificate;
+package certification;
 
 import java.net.SocketAddress;
 import java.security.KeyStoreException;

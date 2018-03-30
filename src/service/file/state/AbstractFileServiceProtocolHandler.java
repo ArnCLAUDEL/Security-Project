@@ -3,8 +3,8 @@ package service.file.state;
 import java.net.SocketAddress;
 import java.util.logging.Level;
 
-import certificate.CertificationStorer;
-import certificate.ConnectedCertificationProtocolHandler;
+import certification.CertificationStorer;
+import certification.ConnectedCertificationProtocolHandler;
 import protocol.NetworkWriter;
 import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;

@@ -1,4 +1,4 @@
-package certificate;
+package certification;
 
 public class NotConnectedCertificationProtocolHandler extends AbstractCertificationProtocolHandler {
 

@@ -1,4 +1,4 @@
-package certificate;
+package certification;
 
 import java.io.IOException;
 import java.security.KeyStoreException;

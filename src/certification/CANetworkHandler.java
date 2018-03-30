@@ -1,4 +1,4 @@
-package server.ca;
+package certification;
 
 import java.io.IOException;
 import java.net.SocketAddress;

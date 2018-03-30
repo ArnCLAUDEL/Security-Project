@@ -1,4 +1,4 @@
-package server.ca;
+package certification;
 
 import java.net.SocketAddress;
 import java.util.logging.Level;

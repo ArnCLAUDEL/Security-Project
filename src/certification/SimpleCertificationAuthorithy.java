@@ -1,4 +1,4 @@
-package server.ca;
+package certification;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,10 +14,6 @@ import java.util.logging.Level;
 
 import org.bouncycastle.operator.OperatorCreationException;
 
-import certificate.CertificationProvider;
-import certificate.CertificationStorer;
-import certificate.SimpleCertificationProvider;
-import certificate.SimpleCertificationStorer;
 import io.AbstractIOEntity;
 import protocol.message.AuthReply;
 import protocol.message.AuthRequest;

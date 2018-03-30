@@ -1,6 +1,6 @@
 package service.file.state;
 
-import certificate.CertificationStorer;
+import certification.CertificationStorer;
 import service.file.FileService;
 import service.file.FileServiceProvider;
 

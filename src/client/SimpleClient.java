@@ -17,11 +17,11 @@ import java.util.logging.Level;
 
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 
-import certificate.AbstractCertificatedEntity;
-import certificate.BaseCertificationRequest;
-import certificate.CertificationProtocolHandler;
-import certificate.ConnectedCertificationProtocolHandler;
-import certificate.NotConnectedCertificationProtocolHandler;
+import certification.AbstractCertificatedEntity;
+import certification.BaseCertificationRequest;
+import certification.CertificationProtocolHandler;
+import certification.ConnectedCertificationProtocolHandler;
+import certification.NotConnectedCertificationProtocolHandler;
 import client.state.ConnectedClientProtocolHandler;
 import client.state.NotConnectedClientProtocolHandler;
 import io.AbstractKeyboardHandler;

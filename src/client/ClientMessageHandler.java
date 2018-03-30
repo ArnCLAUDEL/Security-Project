@@ -3,7 +3,7 @@ package client;
 import java.net.SocketAddress;
 import java.util.logging.Level;
 
-import certificate.CertificationProtocolHandler;
+import certification.CertificationProtocolHandler;
 import protocol.AbstractMessageHandler;
 import protocol.Flag;
 import protocol.message.AuthReply;

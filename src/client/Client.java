@@ -1,7 +1,7 @@
 package client;
 
-import certificate.CertificatedEntity;
-import certificate.CertificationProtocolHandler;
+import certification.CertificatedEntity;
+import certification.CertificationProtocolHandler;
 import io.IOEntity;
 import protocol.NonceGenerator;
 

@@ -1,4 +1,4 @@
-package server.ca;
+package certification;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -15,8 +15,6 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
-import certificate.CertificationProvider;
-import certificate.CertificationStorer;
 import protocol.AbstractProtocolHandler;
 import protocol.NetworkWriter;
 import protocol.message.AuthReply;
