@@ -2,14 +2,14 @@ package client;
 
 import java.net.SocketAddress;
 
-import protocol.message.AuthReply;
-import protocol.message.AuthRequest;
-import protocol.message.CertReply;
-import protocol.message.CertRequest;
+import protocol.message.service.file.ServiceFileReadReply;
+import protocol.message.service.file.ServiceFileReadRequest;
+import protocol.message.service.file.ServiceFileWriteReply;
+import protocol.message.service.file.ServiceFileWriteRequest;
 
 public interface ClientProtocolHandler {
-	void sendAuthRequest(SocketAddress to, AuthRequest request);
-	void sendCertRequest(SocketAddress to, CertRequest request);
-	void handleAuthReply(SocketAddress from, AuthReply reply);
-	void handleCertReply(SocketAddress from, CertReply reply);
+	void sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request);
+	void sendServiceFileWrite(SocketAddress to, ServiceFileWriteRequest request);
+	void handleServiceFileRead(SocketAddress from, ServiceFileReadReply reply);
+	void handleServiceFileWrite(SocketAddress from, ServiceFileWriteReply reply);
 }

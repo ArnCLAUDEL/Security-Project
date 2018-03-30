@@ -28,7 +28,7 @@ public class ClientUDPNetworkHandler extends AbstractUDPNetworkHandler implement
 	
 	@Override
 	protected void register(SocketAddress address, SerializerBuffer serializerBuffer) {
-		ClientMessageHandler handler = new ClientMessageHandler(serializerBuffer, client, address);
+		ClientMessageHandler handler = new ClientMessageHandler(serializerBuffer, client, client, address);
 		executor.execute(handler);
 		messageHandlers.put(address, handler);
 	}

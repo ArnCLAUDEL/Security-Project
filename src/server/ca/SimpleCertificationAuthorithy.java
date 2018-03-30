@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.logging.Level;
 
 import org.bouncycastle.operator.OperatorCreationException;
 
@@ -22,6 +23,7 @@ import protocol.message.AuthReply;
 import protocol.message.AuthRequest;
 import protocol.message.CertReply;
 import protocol.message.CertRequest;
+import util.Cheat;
 import util.KeyGenerator;
 import util.ProviderChecker;
 import util.SerializerBuffer;
@@ -85,6 +87,7 @@ public class SimpleCertificationAuthorithy extends AbstractIOEntity implements C
 	}
 
 	public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, IOException, OperatorCreationException, ClassNotFoundException, InvalidKeySpecException {
+		Cheat.setLoggerLevelDisplay(Level.ALL);
 		SimpleCertificationAuthorithy ca = new SimpleCertificationAuthorithy("Root Certification Authority", "store");
 		new Thread(ca).start();
 	}

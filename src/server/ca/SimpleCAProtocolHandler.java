@@ -44,7 +44,7 @@ public class SimpleCAProtocolHandler extends AbstractProtocolHandler implements 
 			storer.storeCertificate(request.getAlias(), holder);
 			storer.save();
 			Cheat.LOGGER.log(Level.INFO, "Certificate stored with alias : " + request.getAlias());
-			sendAuthReply(from, new AuthReply());
+			sendAuthReply(from, new AuthReply(request.getAlias(), holder));
 		} catch (IOException | ClassNotFoundException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException | OperatorCreationException | CertificateException | KeyStoreException e) {
 			Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
 		}

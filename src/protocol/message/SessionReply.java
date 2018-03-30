@@ -1,5 +1,6 @@
 package protocol.message;
 
+import protocol.Flag;
 import util.SerializerBuffer;
 
 public class SessionReply extends Message {

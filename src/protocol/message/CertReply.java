@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 
+import protocol.Flag;
 import util.Creator;
 import util.SerializerBuffer;
 

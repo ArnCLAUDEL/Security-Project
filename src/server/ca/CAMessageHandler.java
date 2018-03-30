@@ -4,20 +4,20 @@ import java.net.SocketAddress;
 import java.util.logging.Level;
 
 import protocol.AbstractMessageHandler;
+import protocol.Flag;
 import protocol.message.AuthRequest;
 import protocol.message.CertRequest;
-import protocol.message.Flag;
 import util.Cheat;
 import util.SerializerBuffer;
 
 public class CAMessageHandler extends AbstractMessageHandler {
 
-	private final CertificationAuthority certificationAuthority;
+	private final CAProtocolHandler protocolHandler;
 	private final SocketAddress address;
 	
-	public CAMessageHandler(SerializerBuffer serializerBuffer, CertificationAuthority certificationAuthority, SocketAddress address) {
+	public CAMessageHandler(SerializerBuffer serializerBuffer, CAProtocolHandler caProtocolHandler, SocketAddress address) {
 		super(serializerBuffer);
-		this.certificationAuthority = certificationAuthority;
+		this.protocolHandler = caProtocolHandler;
 		this.address = address;	
 	}
 
@@ -34,11 +34,11 @@ public class CAMessageHandler extends AbstractMessageHandler {
 	}
 	
 	private void handleAuthRequest() {
-		handleMessage(serializerBuffer, AuthRequest.CREATOR, address, certificationAuthority::handleAuthRequest);
+		handleMessage(serializerBuffer, AuthRequest.CREATOR, address, protocolHandler::handleAuthRequest);
 	}
 	
 	private void handleCertRequest() {
-		handleMessage(serializerBuffer, CertRequest.CREATOR, address, certificationAuthority::handleCertRequest);
+		handleMessage(serializerBuffer, CertRequest.CREATOR, address, protocolHandler::handleCertRequest);
 	}
 
 }

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.ServerSocketChannel;
 import java.security.KeyFactory;
-import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -17,46 +17,36 @@ import java.util.logging.Level;
 
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 
+import certificate.AbstractCertificatedEntity;
 import certificate.BaseCertificationRequest;
-import certificate.SimpleCertificationApplicant;
-import certificate.SimpleCertificationStorer;
-import io.AbstractIOEntity;
-import protocol.Nonce;
+import certificate.CertificationProtocolHandler;
+import certificate.ConnectedCertificationProtocolHandler;
+import certificate.NotConnectedCertificationProtocolHandler;
+import client.state.ConnectedClientProtocolHandler;
+import client.state.NotConnectedClientProtocolHandler;
 import protocol.message.AuthReply;
 import protocol.message.AuthRequest;
 import protocol.message.CertReply;
 import protocol.message.CertRequest;
+import protocol.message.service.file.ServiceFileReadReply;
+import protocol.message.service.file.ServiceFileReadRequest;
+import protocol.message.service.file.ServiceFileWriteReply;
+import protocol.message.service.file.ServiceFileWriteRequest;
 import util.Cheat;
-import util.KeyGenerator;
-import util.ProviderChecker;
-import util.SerializerBuffer;
 
-public class SimpleClient extends AbstractIOEntity implements Client {
-	private final String name;
-	private final KeyPair keys;
-	private final SimpleCertificationStorer storer;
-	private final SimpleCertificationApplicant applicant;
-	private final ClientProtocolHandler protocolHandler;
-	private final SocketAddress localAddress;
+public class SimpleClient extends AbstractCertificatedEntity implements Client {
+	private ClientProtocolHandler clientProtocolHandler;
+	private CertificationProtocolHandler certificationProtocolHandler;
+	private ClientUDPNetworkHandler networkHandlerUDP;
+	private ClientTCPNetworkHandler networkHandlerTCP;
 	
-	private SocketAddress caAddress;
-	
-	private ClientUDPNetworkHandler networkHandler;
-	private boolean active;
-	
-	public SimpleClient(String name, String keyStoreAlias) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException {
-		super();
-		ProviderChecker.checkProvider();
-		this.name = name;
-		this.keys = KeyGenerator.randomKeys();
-		this.localAddress = new InetSocketAddress(8889);
-		this.caAddress = new InetSocketAddress(8888);
-		this.storer = new SimpleCertificationStorer(keyStoreAlias);
-		this.applicant = new SimpleCertificationApplicant();
-		this.protocolHandler = new SimpleClientProtocolHandler(this, storer, caAddress);
-		this.active = false;
+	public SimpleClient(String name, String keyStoreAlias, SocketAddress localAddress, SocketAddress caAddress) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException {
+		super(name, keyStoreAlias, localAddress, caAddress);
+		this.clientProtocolHandler = new NotConnectedClientProtocolHandler();
+		this.certificationProtocolHandler = new NotConnectedCertificationProtocolHandler(storer);
 	}
 	
+	@Override
 	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
 		X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
 		BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
@@ -66,60 +56,73 @@ public class SimpleClient extends AbstractIOEntity implements Client {
 		sendAuthRequest(caAddress, new AuthRequest(filename, name));
 	}
 	
-	public void retrieveCertificate(String alias) {
-		protocolHandler.sendCertRequest(caAddress, new CertRequest(alias));
-	}
-	
 	@Override
-	public Nonce generateNonce() {
-		return new Nonce();
+	public void sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request) {
+		clientProtocolHandler.sendServiceFileRead(to, request);
 	}
 
 	@Override
+	public void sendServiceFileWrite(SocketAddress to, ServiceFileWriteRequest request) {
+		clientProtocolHandler.sendServiceFileWrite(to, request);
+	}
+
+	@Override
+	public void handleServiceFileRead(SocketAddress from, ServiceFileReadReply reply) {
+		clientProtocolHandler.handleServiceFileRead(from, reply);
+	}
+
+	@Override
+	public void handleServiceFileWrite(SocketAddress from, ServiceFileWriteReply reply) {
+		clientProtocolHandler.handleServiceFileWrite(from, reply);
+	}
+
+	@Override
+	public void retrieveCertificate(String alias) {
+		certificationProtocolHandler.sendCertRequest(caAddress, new CertRequest(alias));
+	}
+	
+	@Override
 	public void sendAuthRequest(SocketAddress to, AuthRequest request) {
-		protocolHandler.sendAuthRequest(to, request);
+		certificationProtocolHandler.sendAuthRequest(to, request);
 	}
 
 	@Override
 	public void sendCertRequest(SocketAddress to, CertRequest request) {
-		protocolHandler.sendCertRequest(to, request);
+		certificationProtocolHandler.sendCertRequest(to, request);
 	}
 
 	@Override
 	public void handleAuthReply(SocketAddress from, AuthReply reply) {
-		protocolHandler.handleAuthReply(from, reply);
+		certificationProtocolHandler.handleAuthReply(from, reply);
 	}
 
 	@Override
 	public void handleCertReply(SocketAddress from, CertReply reply) {
-		protocolHandler.handleCertReply(from, reply);
-	}
-
-	@Override
-	public boolean isActive() {
-		return active;
+		certificationProtocolHandler.handleCertReply(from, reply);
 	}
 
 	@Override
 	protected void start() throws IOException {
-		DatagramChannel channel = DatagramChannel.open();
-		channel.bind(localAddress);
-		networkHandler = new ClientUDPNetworkHandler(channel, this);
-		addHandler(networkHandler);
 		active = true;
-	}
-
-	@Override
-	public int write(SocketAddress address, SerializerBuffer buffer) throws IOException {
-		return networkHandler.write(address, buffer);
+		
+		DatagramChannel datagramChannel = DatagramChannel.open();
+		datagramChannel.bind(localAddress);
+		networkHandlerUDP = new ClientUDPNetworkHandler(datagramChannel, this);
+		addHandler(networkHandlerUDP);
+		certificationProtocolHandler = new ConnectedCertificationProtocolHandler(networkHandlerUDP, storer);
+		
+		ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+		serverSocketChannel.bind(localAddress);
+		networkHandlerTCP = new ClientTCPNetworkHandler(serverSocketChannel, this);
+		addHandler(networkHandlerTCP);
+		clientProtocolHandler = new ConnectedClientProtocolHandler(networkHandlerTCP);
 	}
 	
 	public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, IOException, InvalidKeySpecException {
 		Cheat.setLoggerLevelDisplay(Level.ALL);
-		Client client = new SimpleClient("arnaud", "store_client");
+		Client client = new SimpleClient("arnaud", "store_client", new InetSocketAddress(8889), new InetSocketAddress(8888));
 		new Thread(client).start();
 		client.makeCertificationRequest();
-		client.retrieveCertificate("arnaud");
 	}
 	
 }
