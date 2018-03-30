@@ -15,10 +15,10 @@ import java.util.logging.Level;
 import org.bouncycastle.operator.OperatorCreationException;
 
 import io.AbstractIOEntity;
-import protocol.message.AuthReply;
-import protocol.message.AuthRequest;
-import protocol.message.CertReply;
-import protocol.message.CertRequest;
+import protocol.message.certification.AuthReply;
+import protocol.message.certification.AuthRequest;
+import protocol.message.certification.CertReply;
+import protocol.message.certification.CertRequest;
 import util.Cheat;
 import util.KeyGenerator;
 import util.ProviderChecker;

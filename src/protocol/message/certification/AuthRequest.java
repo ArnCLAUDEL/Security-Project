@@ -1,6 +1,7 @@
-package protocol.message;
+package protocol.message.certification;
 
 import protocol.Flag;
+import protocol.message.Message;
 import util.Creator;
 import util.SerializerBuffer;
 

@@ -5,8 +5,8 @@ import java.util.logging.Level;
 
 import protocol.AbstractMessageHandler;
 import protocol.Flag;
-import protocol.message.AuthRequest;
-import protocol.message.CertRequest;
+import protocol.message.certification.AuthRequest;
+import protocol.message.certification.CertRequest;
 import util.Cheat;
 import util.SerializerBuffer;
 

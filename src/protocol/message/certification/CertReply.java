@@ -1,10 +1,11 @@
-package protocol.message;
+package protocol.message.certification;
 
 import java.io.IOException;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 
 import protocol.Flag;
+import protocol.message.Message;
 import util.Creator;
 import util.SerializerBuffer;
 
