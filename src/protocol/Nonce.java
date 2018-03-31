@@ -25,6 +25,14 @@ public class Nonce implements Comparable<Nonce>, MySerializable {
 		return new Nonce(RANDOM.nextLong());
 	}
 	
+	public static Nonce generateFrom(Nonce nonce) {
+		return new Nonce(nonce.getValue() -1);
+	}
+	
+	public boolean validate(Nonce nonce) {
+		return id == nonce.id -1;
+	}
+	
 	public long getValue() {
 		return id;
 	}

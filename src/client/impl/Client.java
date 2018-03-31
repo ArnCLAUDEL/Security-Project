@@ -10,6 +10,7 @@ import java.security.KeyFactory;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
@@ -42,9 +43,13 @@ import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;
 import protocol.message.service.file.ServiceFileWriteReply;
 import protocol.message.service.file.ServiceFileWriteRequest;
+import protocol.message.session.SessionAck;
+import protocol.message.session.SessionInit;
+import protocol.message.session.SessionOk;
 import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
 import session.client.ISessionClientProtocolHandler;
+import session.client.SessionInfo;
 import session.client.impl.ConnectedSessionClientProtocolHandler;
 import session.client.impl.NotConnectedSessionClientProtocolHandler;
 import util.Cheat;
@@ -106,19 +111,51 @@ public class Client extends ACertificationClient implements IClient {
 	}
 	
 	@Override
-	public SecretKey requestSessionKey() {
-		sendSessionRequest(sessionServerAddress, new SessionRequest(Cheat.RANDOM.nextLong(), Nonce.generate(), name, "service-1"));
+	public SecretKey requestSessionKey() throws CertificateEncodingException, KeyStoreException, IOException {
+		SessionRequest request = new SessionRequest(Cheat.RANDOM.nextLong(), Nonce.generate(), name, "service-1");
+		SessionInfo info = new SessionInfo(request, fileServiceAddress, storer.getCertificate("service-1"));
+		sendSessionRequest(sessionServerAddress, request, info);
 		return null;
 	}
 	
 	@Override
-	public void sendSessionRequest(SocketAddress to, SessionRequest request) {
-		sessionProtocolHandler.sendSessionRequest(to, request);
+	public void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
+		sessionProtocolHandler.sendSessionRequest(to, request, info);
 	}
 
 	@Override
 	public void handleSessionReply(SocketAddress from, SessionReply reply) {
 		sessionProtocolHandler.handleSessionReply(from, reply);
+	}
+	
+	@Override
+	public void sendSessionInit(SocketAddress to, SessionInit init, Cipher cipher) {
+		sessionProtocolHandler.sendSessionInit(to, init, cipher);
+	}
+
+	@Override
+	public void handleSessionInit(SocketAddress from, SessionInit init) {
+		sessionProtocolHandler.handleSessionInit(from, init);
+	}
+
+	@Override
+	public void sendSessionAck(SocketAddress to, SessionAck ack, Cipher cipher) {
+		sessionProtocolHandler.sendSessionAck(to, ack, cipher);
+	}
+
+	@Override
+	public void handleSessionAck(SocketAddress from, SessionAck ack) {
+		sessionProtocolHandler.handleSessionAck(from, ack);
+	}
+
+	@Override
+	public void sendSessionOk(SocketAddress to, SessionOk ok, Cipher cipher) {
+		sessionProtocolHandler.sendSessionOk(to, ok, cipher);
+	}
+
+	@Override
+	public void handleSessionOk(SocketAddress from, SessionOk ok) {
+		sessionProtocolHandler.handleSessionOk(from, ok);
 	}
 
 	@Override
@@ -170,7 +207,7 @@ public class Client extends ACertificationClient implements IClient {
 		networkHandlerUDP = new ClientUDPNetworkHandler(datagramChannel, this, privateRSACipher);
 		addHandler(networkHandlerUDP);
 		certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer);
-		sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP);
+		sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer);
 		
 		ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 		serverSocketChannel.bind(localAddress);
@@ -192,7 +229,15 @@ public class Client extends ACertificationClient implements IClient {
 				catch (InterruptedException e) {}
 				Cheat.LOGGER.log(Level.INFO, "");
 				Cheat.LOGGER.log(Level.INFO, "Preparing reading..");
-				client.requestSessionKey();
+				try {
+					client.requestSessionKey();
+				} catch (CertificateEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (KeyStoreException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				Cheat.LOGGER.log(Level.INFO, "Reading sent..");
 			}
 		});

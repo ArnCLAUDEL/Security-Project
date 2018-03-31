@@ -1,5 +1,5 @@
 package session.client;
 
-public interface ISessionClient {
-
+public interface ISessionClient extends ISessionClientProtocolHandler {
+	
 }

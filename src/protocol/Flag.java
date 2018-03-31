@@ -11,6 +11,9 @@ public final class Flag {
 	public final static byte SERVICE_FILE_WRITE_REQUEST = 11;
 	public final static byte SERVICE_FILE_WRITE_REPLY = 12;
 	public final static byte SERVICE_FILE_READ_REQUEST = 13;
-	public final static byte SERVICE_FILE_READ_REPLY = 13;
+	public final static byte SERVICE_FILE_READ_REPLY = 14;
+	public final static byte SESSION_INIT = 15;
+	public final static byte SESSION_ACK = 16;
+	public final static byte SESSION_OK = 17;
 	private Flag() {}
 }

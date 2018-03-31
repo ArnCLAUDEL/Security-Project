@@ -1,8 +1,11 @@
 package session.client;
 
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.cert.CertificateEncodingException;
+
 import javax.crypto.SecretKey;
 
-// TODO 
 public interface ISessionApplicant {
-	SecretKey requestSessionKey();
+	SecretKey requestSessionKey() throws CertificateEncodingException, KeyStoreException, IOException;
 }
