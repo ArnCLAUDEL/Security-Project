@@ -46,6 +46,7 @@ public class SessionRequest extends AbstractSessionMessage {
 
 	@Override
 	public void writeToBuff(SerializerBuffer ms) {
+		System.err.println(id);
 		ms.putLong(id);
 		senderNonce.writeToBuff(ms);
 		ms.putString(senderAlias);
@@ -55,6 +56,7 @@ public class SessionRequest extends AbstractSessionMessage {
 	@Override
 	public void readFromBuff(SerializerBuffer ms) {
 		id = ms.getLong();
+		System.err.println(id);
 		senderNonce = Nonce.CREATOR.init();
 		senderNonce.readFromBuff(ms);
 		senderAlias = ms.getString();

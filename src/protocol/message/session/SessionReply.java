@@ -28,8 +28,9 @@ public class SessionReply extends AbstractSessionMessage {
 		super(Flag.SESSION_REPLY);
 	}
 	
-	public SessionReply(Nonce senderNonce, String destinationAlias, byte[] encodedMessage, SecretKey secretKey) {
+	public SessionReply(long id, Nonce senderNonce, String destinationAlias, byte[] encodedMessage, SecretKey secretKey) {
 		this();
+		this.id = id;
 		this.senderNonce = senderNonce;
 		this.destinationAlias = destinationAlias;
 		this.secretKey = secretKey;
@@ -53,43 +54,44 @@ public class SessionReply extends AbstractSessionMessage {
 	}
 	
 	public void writeToBuff(SerializerBuffer ms, Cipher rsaCipher) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {				
-		SerializerBuffer buffer = new SerializerBuffer(2048);
+		SerializerBuffer buffer = new SerializerBuffer();
 				
-		buffer.putByteArray(secretKey.getEncoded());
-		buffer.flip();
-		rsaCipher.doFinal(buffer.getBuffer(), ms.getBuffer());	
-		buffer.clear();
+		byte[] encryptedSKey = rsaCipher.doFinal(secretKey.getEncoded());	
+		ms.putByteArray(encryptedSKey);
 		
+		System.err.println(id);
+		buffer.putLong(id);
 		senderNonce.writeToBuff(buffer);
 		buffer.putString(destinationAlias);
 		buffer.putByteArray(encodedMessage);
-		
+		buffer.flip();
 		Cipher aesCipher = Cipher.getInstance("AES");
 		aesCipher.init(Cipher.ENCRYPT_MODE, secretKey);
 		aesCipher.doFinal(buffer.getBuffer(), ms.getBuffer());
 	}
 	
 	public void readFromBuff(SerializerBuffer ms, Cipher rsaCipher) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {				
-		SerializerBuffer buffer = new SerializerBuffer(2048);
-		
+		SerializerBuffer serializer = new SerializerBuffer();
 		byte[] encryptedKey, decryptedKey;
 		encryptedKey = ms.getByteArray();
 		decryptedKey = rsaCipher.doFinal(encryptedKey);
-		
-		System.err.println(decryptedKey);
 		
 		secretKey = new SecretKeySpec(decryptedKey, "AES");
 		
 		Cipher aesCipher = Cipher.getInstance("AES");
 		aesCipher.init(Cipher.DECRYPT_MODE, secretKey);
 		
-		aesCipher.doFinal(ms.getBuffer(), buffer.getBuffer());
-		buffer.flip();
+		aesCipher.doFinal(ms.getBuffer(), serializer.getBuffer());
+		serializer.flip();
 		
+		System.err.println(id);
+		id = serializer.getLong();
 		senderNonce = Nonce.CREATOR.init();
-		senderNonce.readFromBuff(buffer);
-		destinationAlias = buffer.getString();
-		encodedMessage = buffer.getByteArray();
+		senderNonce.readFromBuff(serializer);
+		System.err.println(serializer);
+		destinationAlias = serializer.getString();
+		System.err.println(serializer);
+		encodedMessage = serializer.getByteArray();
 	}
 	
 	@Override

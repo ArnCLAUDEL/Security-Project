@@ -61,7 +61,7 @@ public class ConnectedSessionServerProtocolHandler extends ASessionServerProtoco
 			BCRSAPublicKey publicKeySender = KeyGenerator.bcrsaPublicKeyConverter(senderCertificate);
 			rsaCipherSender.init(Cipher.PUBLIC_KEY, publicKeySender);
 			
-			sendSessionreply(from, new SessionReply(request.getSenderNonce(), request.getDestinationAlias(), encodedMessage, sKey), rsaCipherSender);
+			sendSessionreply(from, new SessionReply(request.getId(), request.getSenderNonce(), request.getDestinationAlias(), encodedMessage, sKey), rsaCipherSender);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException | CertificateEncodingException | KeyStoreException | IOException | InvalidKeyException | InvalidKeySpecException | ShortBufferException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException e) {
 			Cheat.LOGGER.log(Level.SEVERE, "Error while handling SessionRequest.", e);
 		}

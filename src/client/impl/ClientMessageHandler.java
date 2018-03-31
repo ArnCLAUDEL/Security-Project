@@ -61,7 +61,6 @@ public class ClientMessageHandler extends AbstractMessageHandler {
 		
 		try {
 			handleEncryptedMessage(serializerBuffer, SessionReply.CREATOR, address, rsaCipher, sessionProtocolHandler::handleSessionReply);
-			System.out.println("here");
 		} catch (InvalidKeyException | ShortBufferException | IllegalBlockSizeException | BadPaddingException
 				| NoSuchAlgorithmException | NoSuchPaddingException e) {
 			Cheat.LOGGER.log(Level.WARNING, "Error while handling an encrypted message: ", e);
