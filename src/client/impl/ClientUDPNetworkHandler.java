@@ -21,19 +21,19 @@ public class ClientUDPNetworkHandler extends AbstractUDPNetworkHandler implement
 	private final ExecutorService executor;
 	private final Map<SocketAddress, ClientMessageHandler> messageHandlers;
 	private final IClient client;
-	private final Cipher cipher;
+	private final Cipher rsaCipher;
 	
-	public ClientUDPNetworkHandler(DatagramChannel channel, IClient client, Cipher cipher) throws IOException {
+	public ClientUDPNetworkHandler(DatagramChannel channel, IClient client, Cipher rsaCipher) throws IOException {
 		super(channel, SelectionKey.OP_READ, client);
 		this.client = client;
 		this.executor = Executors.newCachedThreadPool();
 		this.messageHandlers = new HashMap<>();
-		this.cipher = cipher;
+		this.rsaCipher = rsaCipher;
 	}
 	
 	@Override
 	protected void register(SocketAddress address, SerializerBuffer serializerBuffer) {
-		ClientMessageHandler handler = new ClientMessageHandler(serializerBuffer, client, client, client, address, cipher);
+		ClientMessageHandler handler = new ClientMessageHandler(serializerBuffer, client, client, client, client, address, rsaCipher);
 		executor.execute(handler);
 		messageHandlers.put(address, handler);
 	}

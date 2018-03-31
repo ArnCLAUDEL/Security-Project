@@ -49,7 +49,7 @@ public class ClientTCPNetworkHandler extends AbstractTCPNetworkHandler implement
 		try {
 			SocketAddress address = channel.getRemoteAddress();
 			channelsAddress.put(channel, address);
-			ClientMessageHandler handler = new ClientMessageHandler(buffer, client, client, client, address, cipher);
+			ClientMessageHandler handler = new ClientMessageHandler(buffer, client, client, client, client, address, cipher);
 			handlers.put(channel, handler);
 			executor.execute(handler);
 		} catch (IOException e) {

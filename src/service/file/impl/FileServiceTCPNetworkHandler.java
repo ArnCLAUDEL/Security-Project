@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import javax.crypto.Cipher;
+
 import service.file.IFileService;
 import service.impl.AServiceTCPNetworkHandler;
 import util.Cheat;
@@ -17,11 +19,13 @@ public class FileServiceTCPNetworkHandler extends AServiceTCPNetworkHandler {
 
 	private final Map<SocketChannel, FileServiceMessageHandler> handlers;
 	private final IFileService fileSP;
+	private final Cipher rsaCipher;
 	
-	public FileServiceTCPNetworkHandler(ServerSocketChannel channel, IFileService fileSP) throws IOException {
+	public FileServiceTCPNetworkHandler(ServerSocketChannel channel, IFileService fileSP, Cipher rsaCipher) throws IOException {
 		super(channel, fileSP);
 		this.handlers = new HashMap<>();
 		this.fileSP = fileSP;
+		this.rsaCipher = rsaCipher;
 	}
 	
 	@Override
@@ -29,7 +33,7 @@ public class FileServiceTCPNetworkHandler extends AServiceTCPNetworkHandler {
 		try {
 			SocketAddress address = channel.getRemoteAddress();
 			channelsAddress.put(channel, address);
-			FileServiceMessageHandler handler = new FileServiceMessageHandler(buffer, address, fileSP, fileSP);
+			FileServiceMessageHandler handler = new FileServiceMessageHandler(buffer, address, fileSP, fileSP, fileSP, fileSP, rsaCipher);
 			handlers.put(channel, handler);
 			executor.execute(handler);
 		} catch (IOException e) {

@@ -112,10 +112,23 @@ public class Client extends ACertificationClient implements IClient {
 	
 	@Override
 	public SecretKey requestSessionKey() throws CertificateEncodingException, KeyStoreException, IOException {
+		retrieveCertificate("service-1");
+		try {Thread.sleep(1000);}
+		catch (InterruptedException e) {}
 		SessionRequest request = new SessionRequest(Cheat.RANDOM.nextLong(), Nonce.generate(), name, "service-1");
 		SessionInfo info = new SessionInfo(request, fileServiceAddress, storer.getCertificate("service-1"));
 		sendSessionRequest(sessionServerAddress, request, info);
 		return null;
+	}
+	
+	@Override
+	public SessionInfo getSessionInfo(long id) {
+		return sessionManager.getSessionInfo(id);
+	}
+
+	@Override
+	public boolean createSession(long id, SessionInfo info) {
+		return sessionManager.createSession(id, info);
 	}
 	
 	@Override
@@ -207,7 +220,7 @@ public class Client extends ACertificationClient implements IClient {
 		networkHandlerUDP = new ClientUDPNetworkHandler(datagramChannel, this, privateRSACipher);
 		addHandler(networkHandlerUDP);
 		certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer);
-		sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer);
+		sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
 		
 		ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 		serverSocketChannel.bind(localAddress);
@@ -249,6 +262,5 @@ public class Client extends ACertificationClient implements IClient {
 		IClient client = new Client("arnaud", "store_client", new InetSocketAddress(8889), new InetSocketAddress(8888), new InetSocketAddress(8890), new InetSocketAddress(8888));
 		new Thread(client).start();
 		client.makeCertificationRequest();
-	}
-	
+	}	
 }

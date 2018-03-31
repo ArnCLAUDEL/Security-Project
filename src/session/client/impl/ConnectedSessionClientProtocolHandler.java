@@ -6,8 +6,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 
 import javax.crypto.Cipher;
@@ -15,7 +13,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 
-import certification.impl.CertificationStorer;
+import certification.ICertificationStorer;
 import protocol.NetworkWriter;
 import protocol.Nonce;
 import protocol.message.session.SessionAck;
@@ -23,27 +21,22 @@ import protocol.message.session.SessionInit;
 import protocol.message.session.SessionOk;
 import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
+import session.client.ISessionManager;
 import session.client.SessionInfo;
 import util.Cheat;
 import util.KeyGenerator;
 
 public class ConnectedSessionClientProtocolHandler extends ASessionClientProtocolHandler {
-
-	private final Map<Long, SessionInfo> sessionsInfo;
-	private final Map<Long, Nonce> idNonces;
 	
-	
-	public ConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, CertificationStorer storer) {
-		super(networkWriter, storer);
-		this.sessionsInfo = new HashMap<>();
-		this.idNonces = new HashMap<>();
+	public ConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, ISessionManager sessionManager) {
+		super(networkWriter, storer, sessionManager);
 	}
 	
 	@Override
 	public void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
 		if(request.getId() != info.getId())
-			throw new IllegalArgumentException("Id of the request different from the one of the infos : " + request.getId() + " != " + info.getId());
-		sessionsInfo.put(request.getId(), info);
+			throw new IllegalArgumentException("Id of the request different from the one of the info : " + request.getId() + " != " + info.getId());
+		sessionManager.createSession(info.getId(), info);
 		send(to, request);
 	}
 	
@@ -75,7 +68,7 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 		
 		
 		try {
-			SessionInfo info = sessionsInfo.get(reply.getId());
+			SessionInfo info = sessionManager.getSessionInfo(reply.getId());
 			info.setSecretKey(reply.getSecretKey());
 			Cipher rsaCipherDestination = Cipher.getInstance("RSA");
 			BCRSAPublicKey publicKeyDestination = KeyGenerator.bcrsaPublicKeyConverter(info.getCertificateHolder());
@@ -90,8 +83,11 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 	@Override
 	public void handleSessionInit(SocketAddress from, SessionInit init) {
 		try {
+			sessionManager.createSession(init.getId(), new SessionInfo(init.getId(), init.getSenderAlias()));
 			Nonce destinationNonce = Nonce.generate();
-			idNonces.put(init.getId(), destinationNonce);
+			SessionInfo sessionInfo = sessionManager.getSessionInfo(init.getId());
+			sessionInfo.setDestinationNonce(destinationNonce);
+			sessionInfo.setSecretKey(init.getSecretKey());
 			Cipher aesCipherSender = Cipher.getInstance("AES");
 			aesCipherSender.init(Cipher.ENCRYPT_MODE, init.getSecretKey());
 			sendSessionAck(from, new SessionAck(init.getId(), destinationNonce), aesCipherSender);
@@ -103,7 +99,8 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 	@Override
 	public void handleSessionAck(SocketAddress from, SessionAck ack) {
 		try {
-			SessionInfo info = sessionsInfo.get(ack.getId());
+			SessionInfo info = sessionManager.getSessionInfo(ack.getId());
+			info.setDestinationNonce(ack.getDestinationNonce());
 			Cipher aesCipherSender = Cipher.getInstance("AES");
 			aesCipherSender.init(Cipher.ENCRYPT_MODE, info.getSecretKey().get());
 			sendSessionOk(from, new SessionOk(info.getId(), Nonce.generateFrom(ack.getDestinationNonce())), aesCipherSender);
@@ -114,15 +111,16 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 
 	@Override
 	public void handleSessionOk(SocketAddress from, SessionOk ok) {
-		SessionInfo info = sessionsInfo.get(ok.getId());
-		if(idNonces.get(ok.getId()).validate(ok.getSenderNonce())) {
-			Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " validated");
-		} else {
-			Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " rejected, incorrect nonce.");
+		SessionInfo info = sessionManager.getSessionInfo(ok.getId());
+		if(!info.getDestinationNonce().isPresent())
+			Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " has no nonce 2.");
+		else {
+			if(info.getDestinationNonce().get().validate(ok.getSenderNonce())) {
+				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " validated");
+			} else {
+				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " rejected, incorrect nonce.");
+			}
 		}
 		
 	}
-	
-	
-
 }

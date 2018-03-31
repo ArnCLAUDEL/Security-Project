@@ -18,10 +18,16 @@ public class SessionInfo {
 	private final X509CertificateHolder holder;
 	private final Nonce senderNonce;
 	
+	private Optional<Nonce> destinationNonce;
 	private Optional<SecretKey> secretKey;
 	
 	public SessionInfo(SessionRequest request, SocketAddress destinationAddress, X509CertificateHolder holder) {
 		this(request.getId(), request.getSenderAlias(), request.getDestinationAlias(), request.getSenderNonce(), destinationAddress, holder);
+	}
+	
+	// TODO
+	public SessionInfo(long id, String senderAlias) {
+		this(id, senderAlias, null, null, null, null);
 	}
 	
 	public SessionInfo(long id, String senderAlias, String destinationAlias, Nonce senderNonce, SocketAddress destinationAddress, X509CertificateHolder holder) {
@@ -33,6 +39,7 @@ public class SessionInfo {
 		this.senderNonce = senderNonce;
 		this.holder = holder;
 		this.secretKey = Optional.empty();
+		this.destinationNonce = Optional.empty();
 	}
 	
 	public long getId() {
@@ -67,6 +74,17 @@ public class SessionInfo {
 		if(this.secretKey.isPresent())
 			return false;
 		this.secretKey = Optional.of(secretKey);
+		return true;
+	}
+	
+	public Optional<Nonce> getDestinationNonce() {
+		return destinationNonce;
+	}
+	
+	public boolean setDestinationNonce(Nonce nonce) {
+		if(destinationNonce.isPresent())
+			return false;
+		destinationNonce = Optional.of(nonce);
 		return true;
 	}
 	

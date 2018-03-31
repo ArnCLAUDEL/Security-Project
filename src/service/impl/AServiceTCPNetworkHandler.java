@@ -9,8 +9,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import io.AbstractTCPNetworkHandler;
+import io.IOEntity;
 import protocol.NetworkWriter;
-import service.IServiceProvider;
 import util.BiMap;
 import util.SerializerBuffer;
 
@@ -19,7 +19,7 @@ public abstract class AServiceTCPNetworkHandler extends AbstractTCPNetworkHandle
 	protected final ExecutorService executor;
 	protected final BiMap<SocketChannel, SocketAddress> channelsAddress;
 	
-	public AServiceTCPNetworkHandler(ServerSocketChannel channel, IServiceProvider entity) throws IOException {
+	public AServiceTCPNetworkHandler(ServerSocketChannel channel, IOEntity entity) throws IOException {
 		super(channel, SelectionKey.OP_ACCEPT, entity);
 		this.channelsAddress = new BiMap<>();
 		this.executor = Executors.newCachedThreadPool();

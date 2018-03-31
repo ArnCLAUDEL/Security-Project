@@ -36,7 +36,7 @@ public class SessionOk extends AbstractSessionMessage {
 	public void writeToBuff(SerializerBuffer ms, Cipher cipher) throws ShortBufferException, IllegalBlockSizeException,
 			BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
 			SerializerBuffer clearBuffer = new SerializerBuffer();
-			clearBuffer.putLong(id);
+			ms.putLong(id);
 			senderNonce.writeToBuff(clearBuffer);
 			clearBuffer.flip();
 			cipher.doFinal(clearBuffer.getBuffer(), ms.getBuffer());
@@ -46,9 +46,9 @@ public class SessionOk extends AbstractSessionMessage {
 	public void readFromBuff(SerializerBuffer ms, Cipher cipher) throws ShortBufferException, IllegalBlockSizeException,
 			BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 		SerializerBuffer clearBuffer = new SerializerBuffer();
+		id = ms.getLong();
 		cipher.doFinal(ms.getBuffer(), clearBuffer.getBuffer());
 		clearBuffer.flip();
-		id = clearBuffer.getLong();
 		senderNonce = Nonce.CREATOR.init();
 		senderNonce.readFromBuff(clearBuffer);
 	}
