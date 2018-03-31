@@ -11,12 +11,12 @@ public class ServiceFileReadRequest extends AbstractServiceFileMessage {
 		super(Flag.SERVICE_FILE_READ_REQUEST);
 	}
 	
-	public ServiceFileReadRequest(String filename) {
-		super(Flag.SERVICE_FILE_READ_REQUEST, filename);
+	public ServiceFileReadRequest(long id, String filename) {
+		super(Flag.SERVICE_FILE_READ_REQUEST, id, filename);
 	}
 	
-	public ServiceFileReadRequest(String filename, String errorMessage) {
-		super(Flag.SERVICE_FILE_READ_REQUEST, filename, errorMessage);
+	public ServiceFileReadRequest(long id, String filename, String errorMessage) {
+		super(Flag.SERVICE_FILE_READ_REQUEST, id, filename, errorMessage);
 	}
 
 	@Override

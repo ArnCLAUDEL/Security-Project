@@ -13,13 +13,13 @@ public class ServiceFileReadReply extends AbstractServiceFileMessage {
 		super(Flag.SERVICE_FILE_READ_REPLY);
 	}
 	
-	public ServiceFileReadReply(String filename, String content) {
-		super(Flag.SERVICE_FILE_READ_REPLY, filename);
+	public ServiceFileReadReply(String filename, String content, long id) {
+		super(Flag.SERVICE_FILE_READ_REPLY, id, filename);
 		this.content = content;
 	}
 	
-	public ServiceFileReadReply(String filename, String content, String errorMessage) {
-		super(Flag.SERVICE_FILE_READ_REPLY, filename, errorMessage);
+	public ServiceFileReadReply(long id, String filename, String content, String errorMessage) {
+		super(Flag.SERVICE_FILE_READ_REPLY, id, filename, errorMessage);
 		this.content = content;
 	}
 	

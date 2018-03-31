@@ -6,11 +6,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class ProviderChecker {
 	private static boolean providerSet = false;
+	private static BouncyCastleProvider provider;
 	
 	public static void checkProvider() {
-		if(providerSet)
+		if(providerSet && provider != null)
 			return;
-		Security.addProvider(new BouncyCastleProvider());
+		provider = new BouncyCastleProvider();
+		Security.addProvider(provider);
 		providerSet = true;
 	}
 }

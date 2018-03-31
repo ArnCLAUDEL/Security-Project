@@ -2,13 +2,41 @@ package protocol;
 
 import java.util.Random;
 
-public class Nonce implements Comparable<Nonce> {
-	private final static Random RAND = new Random();
+import io.MySerializable;
+import util.Creator;
+import util.SerializerBuffer;
+
+public class Nonce implements Comparable<Nonce>, MySerializable {
+	public final static Creator<Nonce> CREATOR = Nonce::new;
 	
-	private final long id;
+	private final static Random RANDOM = new Random();
 	
-	public Nonce() {
-		this.id = RAND.nextLong();
+	private long id;
+	
+	private Nonce() {
+		
+	}
+	
+	private Nonce(long id) {
+		this.id = id;
+	}
+	
+	public static Nonce generate() {
+		return new Nonce(RANDOM.nextLong());
+	}
+	
+	public long getValue() {
+		return id;
+	}
+	
+	@Override
+	public void writeToBuff(SerializerBuffer ms) {
+		ms.putLong(id);
+	}
+
+	@Override
+	public void readFromBuff(SerializerBuffer ms) {
+		this.id = ms.getLong();
 	}
 	
 	@Override

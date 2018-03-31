@@ -2,10 +2,20 @@ package protocol;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+
+import protocol.message.EncryptedMessage;
 import protocol.message.Message;
 import util.Cheat;
 import util.SerializerBuffer;
@@ -100,6 +110,25 @@ public class AbstractProtocolHandler {
 		if(send(address)) {
 			Cheat.LOGGER.log(Level.FINER, "Message " + message + " sent.");
 			return true;
+		}
+		return false;
+	}
+	
+	protected synchronized boolean send(SocketAddress address, EncryptedMessage message, Cipher cipher) {
+		Cheat.LOGGER.log(Level.FINE, "Sending message..");
+		try {
+			serializerBuffer.clear();
+			serializerBuffer.put(message.getFlag());
+		
+			message.writeToBuff(serializerBuffer, cipher);
+			serializerBuffer.flip();
+			if(send(address)) {
+				Cheat.LOGGER.log(Level.FINER, "Message " + message + " sent.");
+				return true;
+			}
+		} catch (InvalidKeyException | ShortBufferException | IllegalBlockSizeException | BadPaddingException
+				| NoSuchAlgorithmException | NoSuchPaddingException e) {
+			Cheat.LOGGER.log(Level.WARNING, "Error while sending Message " + message + ".", e);
 		}
 		return false;
 	}

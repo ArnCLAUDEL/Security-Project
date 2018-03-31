@@ -1,11 +1,20 @@
 package protocol;
 
 import java.nio.BufferUnderflowException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+
 import io.AbstractHandler;
+import protocol.message.EncryptedMessage;
 import protocol.message.Message;
 import util.Cheat;
 import util.Creator;
@@ -70,6 +79,13 @@ public abstract class AbstractMessageHandler extends AbstractHandler {
 	protected <M extends Message, T> void handleMessage(SerializerBuffer serializerBuffer, Creator<M> messageCreator, T info, BiConsumer<T, M> handler) {
 		M message = messageCreator.init();
 		message.readFromBuff(serializerBuffer);
+		Cheat.LOGGER.log(Level.FINER, message + " received.");
+		handler.accept(info, message);
+	}
+	
+	protected <M extends EncryptedMessage, T> void handleEncryptedMessage(SerializerBuffer serializerBuffer, Creator<M> messageCreator, T info, Cipher cipher, BiConsumer<T, M> handler) throws InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+		M message = messageCreator.init();
+		message.readFromBuff(serializerBuffer, cipher);
 		Cheat.LOGGER.log(Level.FINER, message + " received.");
 		handler.accept(info, message);
 	}

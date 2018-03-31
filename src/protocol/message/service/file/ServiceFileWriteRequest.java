@@ -13,13 +13,13 @@ public class ServiceFileWriteRequest extends AbstractServiceFileMessage {
 		super(Flag.SERVICE_FILE_WRITE_REQUEST);
 	}
 	
-	public ServiceFileWriteRequest(String filename, String content) {
-		super(Flag.SERVICE_FILE_WRITE_REQUEST, filename);
+	public ServiceFileWriteRequest(long id, String filename, String content) {
+		super(Flag.SERVICE_FILE_WRITE_REQUEST, id, filename);
 		this.content = content;
 	}
 	
-	public ServiceFileWriteRequest(String filename, String content, String errorMessage) {
-		super(Flag.SERVICE_FILE_WRITE_REQUEST, errorMessage);
+	public ServiceFileWriteRequest(String filename, long id, String content, String errorMessage) {
+		super(Flag.SERVICE_FILE_WRITE_REQUEST, id, errorMessage);
 		this.content = content;
 	}
 	
