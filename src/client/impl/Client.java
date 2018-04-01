@@ -22,8 +22,8 @@ import java.util.logging.Level;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 
 import certification.BaseCertificationRequest;
@@ -34,6 +34,7 @@ import certification.client.impl.NotConnectedCertificationClientProtocolHandler;
 import client.IClient;
 import client.IClientProtocolHandler;
 import io.AbstractKeyboardHandler;
+import io.Handler;
 import protocol.Nonce;
 import protocol.message.certification.AuthReply;
 import protocol.message.certification.AuthRequest;
@@ -49,6 +50,7 @@ import protocol.message.session.SessionOk;
 import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
 import session.client.ISessionClientProtocolHandler;
+import session.client.SessionIdentifier;
 import session.client.SessionInfo;
 import session.client.impl.ConnectedSessionClientProtocolHandler;
 import session.client.impl.NotConnectedSessionClientProtocolHandler;
@@ -85,40 +87,30 @@ public class Client extends ACertificationClient implements IClient {
 		BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
 		String filename = "request_" + name;
 		applicant.saveCSR(request, filename);
-		sendAuthRequest(caAddress, new AuthRequest(filename, name));
+		sendAuthRequest(caAddress, new AuthRequest(Cheat.getId(), filename, name));
 	}
 	
 	@Override
-	public void retrieveCertificate(String alias) {
-		sendCertRequest(caAddress, new CertRequest(alias));
+	public Future<X509CertificateHolder> retrieveCertificate(String alias) {
+		return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
 	}
 	
 	@Override
-	public void writeTo(String filename, String content) {
-		sendServiceFileWrite(fileServiceAddress, new ServiceFileWriteRequest(Cheat.RANDOM.nextLong(), filename, content));
+	public void writeTo(String filename, String content, SessionIdentifier sessionIdentifier) {
+		sendServiceFileWrite(fileServiceAddress, new ServiceFileWriteRequest(Cheat.getId(), filename, content, sessionIdentifier));
 	}
 	
 	@Override
-	public void readFrom(String filename) {
+	public Future<String> readFrom(String filename, SessionIdentifier sessionIdentifier) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 		System.out.println("Sending request..");
-		Future<String> result = sendServiceFileRead(fileServiceAddress, new ServiceFileReadRequest(Cheat.RANDOM.nextLong(), filename));
-		System.out.println("Waiting for result..");
-		try {
-			System.out.println(result.get());
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
+		return sendServiceFileRead(fileServiceAddress, new ServiceFileReadRequest(Cheat.getId(), filename, sessionIdentifier), sessionManager.getSessionInfo(sessionIdentifier.getId()));
 	}
 	
 	@Override
-	public SecretKey requestSessionKey() throws CertificateEncodingException, KeyStoreException, IOException {
-		retrieveCertificate("service-1");
-		try {Thread.sleep(1000);}
-		catch (InterruptedException e) {}
-		SessionRequest request = new SessionRequest(Cheat.RANDOM.nextLong(), Nonce.generate(), name, "service-1");
-		SessionInfo info = new SessionInfo(request, fileServiceAddress, storer.getCertificate("service-1"));
-		sendSessionRequest(sessionServerAddress, request, info);
-		return null;
+	public Future<SessionIdentifier> requestSession(String alias, X509CertificateHolder destinationCertificateHolder) throws CertificateEncodingException, KeyStoreException, IOException {
+		SessionRequest request = new SessionRequest(Cheat.getId(), Nonce.generate(), name, alias);
+		SessionInfo info = new SessionInfo(request, fileServiceAddress, destinationCertificateHolder);
+		return sendSessionRequest(sessionServerAddress, request, info);
 	}
 	
 	@Override
@@ -132,8 +124,13 @@ public class Client extends ACertificationClient implements IClient {
 	}
 	
 	@Override
-	public void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
-		sessionProtocolHandler.sendSessionRequest(to, request, info);
+	public boolean checkSessionIdentifier(SessionIdentifier sessionIdentifier) {
+		return sessionManager.checkSessionIdentifier(sessionIdentifier);
+	}
+	
+	@Override
+	public Future<SessionIdentifier> sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
+		return sessionProtocolHandler.sendSessionRequest(to, request, info);
 	}
 
 	@Override
@@ -172,8 +169,8 @@ public class Client extends ACertificationClient implements IClient {
 	}
 
 	@Override
-	public CompletableFuture<String> sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request) {
-		return clientProtocolHandler.sendServiceFileRead(to, request);
+	public CompletableFuture<String> sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request, SessionInfo info) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
+		return clientProtocolHandler.sendServiceFileRead(to, request, info);
 	}
 
 	@Override
@@ -192,13 +189,13 @@ public class Client extends ACertificationClient implements IClient {
 	}
 
 	@Override
-	public void sendAuthRequest(SocketAddress to, AuthRequest request) {
-		certificationProtocolHandler.sendAuthRequest(to, request);
+	public Future<X509CertificateHolder> sendAuthRequest(SocketAddress to, AuthRequest request) {
+		return certificationProtocolHandler.sendAuthRequest(to, request);
 	}
 
 	@Override
-	public void sendCertRequest(SocketAddress to, CertRequest request) {
-		certificationProtocolHandler.sendCertRequest(to, request);
+	public Future<X509CertificateHolder> sendCertRequest(SocketAddress to, CertRequest request) {
+		return certificationProtocolHandler.sendCertRequest(to, request);
 	}
 
 	@Override
@@ -229,32 +226,33 @@ public class Client extends ACertificationClient implements IClient {
 		clientProtocolHandler = new ConnectedClientProtocolHandler(networkHandlerTCP);
 		final IClient client = this;
 		
-		//networkHandlerTCP.connect(fileServiceAddress);
+		networkHandlerTCP.connect(fileServiceAddress);
 		
-		addHandler(new AbstractKeyboardHandler() {
-			
+		Handler handler = new AbstractKeyboardHandler() {
 			@Override
 			protected void handle(SerializerBuffer serializerBuffer) throws IOException {
-				Cheat.LOGGER.log(Level.INFO, "Preparing writing..");
-				//client.writeTo("test.txt", "Hello World");
-				Cheat.LOGGER.log(Level.INFO, "Writing sent..");
-				try {Thread.sleep(1000);}
-				catch (InterruptedException e) {}
-				Cheat.LOGGER.log(Level.INFO, "");
-				Cheat.LOGGER.log(Level.INFO, "Preparing reading..");
 				try {
-					client.requestSessionKey();
-				} catch (CertificateEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (KeyStoreException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					System.out.println("Preparing request..");
+					Future<X509CertificateHolder> futureHolder = client.retrieveCertificate("service-1");
+					System.out.println("Waiting for CertificateHolder..");
+					X509CertificateHolder holder = futureHolder.get();
+					System.out.println("CertificateHolder received..");
+					Future<SessionIdentifier> futureSessionIdentifier = client.requestSession("service-1", holder);
+					System.out.println("Waiting for SessionIdentifier..");
+					SessionIdentifier sessionIdentifier = futureSessionIdentifier.get();
+					System.out.println("SessionIdentifier received..");
+					try {Thread.sleep(1000);}
+					catch (InterruptedException e) {}
+					Future<String> futureResult = readFrom("test.txt", sessionIdentifier);
+					System.out.println("Waiting for result..");
+					String result = futureResult.get();
+					System.out.println("Result received : " + result);
+				} catch (InterruptedException | ExecutionException | CertificateEncodingException | KeyStoreException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+					Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
 				}
-				Cheat.LOGGER.log(Level.INFO, "Reading sent..");
 			}
-		});
-		
+		};
+		addHandler(handler);
 	}
 	
 	public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, IOException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException {

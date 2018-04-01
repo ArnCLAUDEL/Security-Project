@@ -19,6 +19,7 @@ import protocol.message.Message;
 import util.Cheat;
 import util.Creator;
 import util.SerializerBuffer;
+import util.TriConsumer;
 
 /**
  * {@code AbstractMessageHandler} provides a base implementation for a
@@ -88,8 +89,14 @@ public abstract class AbstractMessageHandler extends AbstractHandler {
 		message.readFromBuff(serializerBuffer, cipher);
 		Cheat.LOGGER.log(Level.FINER, message + " received.");
 		handler.accept(info, message);
-	}
+	}	
 	
+	protected <M extends EncryptedMessage, T, U extends Cipher> void handleEncryptedMessage(SerializerBuffer serializerBuffer, Creator<M> messageCreator, T info, U cipher, TriConsumer<T, M, U> handler) throws InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+		M message = messageCreator.init();
+		message.readFromBuff(serializerBuffer, cipher);
+		Cheat.LOGGER.log(Level.FINER, message + " received.");
+		handler.accept(info, message, cipher);
+	}
 	
 	/**
 	 * Stops the handler and notify everyone waiting on the buffer.

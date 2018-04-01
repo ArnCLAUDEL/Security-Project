@@ -1,15 +1,25 @@
 package protocol.message.service.file;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
-import protocol.message.Message;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+
+import protocol.message.EncryptedMessage;
+import session.client.SessionIdentifier;
 import util.SerializerBuffer;
 
-public abstract class AbstractServiceFileMessage extends Message {
+public abstract class AbstractServiceFileMessage extends EncryptedMessage {
 	protected final static byte OK = 1;
 	protected final static byte ERROR = 2;
 	
 	protected long id;
+	protected SessionIdentifier sessionIdentifier;
 	protected String filename;
 	protected Optional<String> errorMessage;
 		
@@ -18,20 +28,22 @@ public abstract class AbstractServiceFileMessage extends Message {
 		this.errorMessage = Optional.empty();
 	}
 	
-	protected AbstractServiceFileMessage(byte flag, long id) {
+	protected AbstractServiceFileMessage(byte flag, long id, SessionIdentifier sessionIdentifier) {
 		super(flag);
 		this.id = id;
+		this.sessionIdentifier = sessionIdentifier;
 		this.errorMessage = Optional.empty();
 	}
 	
-	protected AbstractServiceFileMessage(byte flag, long id, String filename) {
+	protected AbstractServiceFileMessage(byte flag, long id, String filename, SessionIdentifier sessionIdentifier) {
 		this(flag);
 		this.id = id;
+		this.sessionIdentifier = sessionIdentifier;
 		this.filename = filename;
 	}
 	
-	protected AbstractServiceFileMessage(byte flag, long id, String filename, String errorMessage) {
-		this(flag, id, filename);
+	protected AbstractServiceFileMessage(byte flag, long id, String filename, String errorMessage, SessionIdentifier sessionIdentifier) {
+		this(flag, id, filename, sessionIdentifier);
 		this.errorMessage = Optional.of(errorMessage);
 	}
 	
@@ -46,7 +58,11 @@ public abstract class AbstractServiceFileMessage extends Message {
 	public Optional<String> getErrorMessage() {
 		return errorMessage;
 	}
-  
+	
+	public SessionIdentifier getSessionIdentifier() {
+		return sessionIdentifier;
+	}
+
 	@Override
 	public void writeToBuff(SerializerBuffer ms) {
 		ms.putLong(id);
@@ -57,6 +73,7 @@ public abstract class AbstractServiceFileMessage extends Message {
 		} else {
 			ms.put(OK);
 		}
+		sessionIdentifier.writeToBuff(ms);
 	}
 
 	@Override
@@ -67,6 +84,8 @@ public abstract class AbstractServiceFileMessage extends Message {
 		if(flag == ERROR) {
 			this.errorMessage = Optional.of(ms.getString());
 		}
+		this.sessionIdentifier = SessionIdentifier.CREATOR.init();
+		this.sessionIdentifier.readFromBuff(ms);
 	}
 	
 	

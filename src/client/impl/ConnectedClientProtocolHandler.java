@@ -1,16 +1,22 @@
 package client.impl;
 
 import java.net.SocketAddress;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 
 import protocol.NetworkWriter;
 import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;
 import protocol.message.service.file.ServiceFileWriteReply;
 import protocol.message.service.file.ServiceFileWriteRequest;
+import session.client.SessionInfo;
 import util.Cheat;
 
 public class ConnectedClientProtocolHandler extends AClientProtocolHandler {
@@ -23,10 +29,12 @@ public class ConnectedClientProtocolHandler extends AClientProtocolHandler {
 	}
 	
 	@Override
-	public CompletableFuture<String> sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request) {
+	public CompletableFuture<String> sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request, SessionInfo info) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 		CompletableFuture<String> result = new CompletableFuture<>();
 		results.put(request.getId(), result);
-		send(to, request);
+		Cipher aesCipher = Cipher.getInstance("AES");
+		aesCipher.init(Cipher.ENCRYPT_MODE, info.getSecretKey().get());
+		send(to, request, aesCipher);
 		return result;
 	}
 

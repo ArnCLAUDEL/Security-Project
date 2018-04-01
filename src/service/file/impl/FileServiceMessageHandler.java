@@ -115,7 +115,18 @@ public class FileServiceMessageHandler extends AbstractMessageHandler {
 	}
 	
 	private void handleServiceFileRead() { 
-		handleMessage(serializerBuffer, ServiceFileReadRequest.CREATOR, address, fileServiceProtocolHandler::handleServiceFileRead);
+		try {
+			int position = serializerBuffer.position();
+			long requestId = serializerBuffer.getLong();
+			long sessionId = serializerBuffer.getLong();
+			serializerBuffer.position(position);
+			Optional<SecretKey> secretKey = sessionManager.getSessionInfo(sessionId).getSecretKey();
+			Cipher aesCipher = Cipher.getInstance("AES");
+			aesCipher.init(Cipher.DECRYPT_MODE, secretKey.get());
+			handleEncryptedMessage(serializerBuffer, ServiceFileReadRequest.CREATOR, address, aesCipher, fileServiceProtocolHandler::handleServiceFileRead);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
+			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionAck", e);
+		}
 	}
 	
 	private void handleServiceFileWrite() { 

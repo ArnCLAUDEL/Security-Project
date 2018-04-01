@@ -6,6 +6,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import javax.crypto.Cipher;
@@ -22,22 +26,29 @@ import protocol.message.session.SessionOk;
 import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
 import session.client.ISessionManager;
+import session.client.SessionIdentifier;
 import session.client.SessionInfo;
 import util.Cheat;
 import util.KeyGenerator;
 
 public class ConnectedSessionClientProtocolHandler extends ASessionClientProtocolHandler {
+		
+	private final Map<Long, CompletableFuture<SessionIdentifier>> results;
 	
 	public ConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, ISessionManager sessionManager) {
 		super(networkWriter, storer, sessionManager);
+		this.results = new HashMap<>();
 	}
 	
 	@Override
-	public void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
+	public Future<SessionIdentifier> sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
 		if(request.getId() != info.getId())
 			throw new IllegalArgumentException("Id of the request different from the one of the info : " + request.getId() + " != " + info.getId());
 		sessionManager.createSession(info.getId(), info);
+		CompletableFuture<SessionIdentifier> result = new CompletableFuture<>();
+		results.put(info.getId(), result);	
 		send(to, request);
+		return result;
 	}
 	
 	@Override
@@ -57,23 +68,12 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 	
 	@Override
 	public void handleSessionReply(SocketAddress from, SessionReply reply) {		
-		StringBuilder sb = new StringBuilder();
-		sb.append("Session reply :"
-				+ "id : " + reply.getId() + "\n"
-				+ "destination : " + reply.getDestinationAlias() + "\n"
-				+ "secretKey : " + reply.getSecretKey());
-		
-		Cheat.LOGGER.log(Level.INFO, sb.toString());
-		
-		
-		
 		try {
 			SessionInfo info = sessionManager.getSessionInfo(reply.getId());
 			info.setSecretKey(reply.getSecretKey());
 			Cipher rsaCipherDestination = Cipher.getInstance("RSA");
 			BCRSAPublicKey publicKeyDestination = KeyGenerator.bcrsaPublicKeyConverter(info.getCertificateHolder());
 			rsaCipherDestination.init(Cipher.PUBLIC_KEY, publicKeyDestination);
-			
 			sendSessionInit(info.getDestinationAddress(), new SessionInit(reply.getId(), reply.getSecretKey(), info.getSenderAlias()), rsaCipherDestination);
 		} catch (InvalidKeyException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException | IOException | NoSuchPaddingException e) {
 			Cheat.LOGGER.log(Level.SEVERE, "Error while handling SessionRely.", e);
@@ -101,6 +101,7 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 		try {
 			SessionInfo info = sessionManager.getSessionInfo(ack.getId());
 			info.setDestinationNonce(ack.getDestinationNonce());
+			results.get(info.getId()).complete(new SessionIdentifier(ack.getId(), ack.getDestinationNonce()));
 			Cipher aesCipherSender = Cipher.getInstance("AES");
 			aesCipherSender.init(Cipher.ENCRYPT_MODE, info.getSecretKey().get());
 			sendSessionOk(from, new SessionOk(info.getId(), Nonce.generateFrom(ack.getDestinationNonce())), aesCipherSender);

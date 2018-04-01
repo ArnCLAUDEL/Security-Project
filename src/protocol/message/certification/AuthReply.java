@@ -5,23 +5,21 @@ import java.io.IOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 
 import protocol.Flag;
-import protocol.message.Message;
 import util.Creator;
 import util.SerializerBuffer;
 
-public class AuthReply extends Message {
+public class AuthReply extends AbstractCertificationMessage {
 	public final static Creator<AuthReply> CREATOR = AuthReply::new;
 	
 	private String alias;
 	private X509CertificateHolder holder;
 	
-	
 	private AuthReply() {
 		super(Flag.AUTH_REPLY);
 	}
 	
-	public AuthReply(String alias, X509CertificateHolder holder) {
-		this();
+	public AuthReply(long id, String alias, X509CertificateHolder holder) {
+		super(Flag.AUTH_REPLY, id);
 		this.alias = alias;
 		this.holder = holder;
 	}
@@ -37,6 +35,7 @@ public class AuthReply extends Message {
 	@Override
 	public void writeToBuff(SerializerBuffer ms) {
 		try {
+			ms.putLong(id);
 			ms.putString(alias);
 			byte[] encoded = holder.getEncoded();
 			ms.putInt(encoded.length);
@@ -49,6 +48,7 @@ public class AuthReply extends Message {
 	@Override
 	public void readFromBuff(SerializerBuffer ms) {
 		try { 
+			this.id = ms.getLong();
 			this.alias = ms.getString();
 			int length = ms.getInt();
 			byte[] encoded = new byte[length];

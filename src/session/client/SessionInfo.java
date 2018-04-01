@@ -88,4 +88,8 @@ public class SessionInfo {
 		return true;
 	}
 	
+	public boolean isValid() {
+		return destinationNonce.isPresent();
+	}
+	
 }

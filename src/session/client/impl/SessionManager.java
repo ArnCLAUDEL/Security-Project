@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import session.client.ISessionManager;
+import session.client.SessionIdentifier;
 import session.client.SessionInfo;
 
 public class SessionManager implements ISessionManager {
@@ -25,6 +26,19 @@ public class SessionManager implements ISessionManager {
 			return false;
 		idSessions.put(id, info);
 		return true;
+	}
+
+	@Override
+	public boolean checkSessionIdentifier(SessionIdentifier sessionIdentifier) {
+		if(!idSessions.containsKey(sessionIdentifier.getId()))
+			return false;
+		
+		SessionInfo info = idSessions.get(sessionIdentifier.getId());
+		
+		if(!info.isValid())
+			return false;
+		
+		return info.getDestinationNonce().get().equals(sessionIdentifier.getNonce());
 	}
 
 }

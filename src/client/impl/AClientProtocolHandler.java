@@ -1,8 +1,12 @@
 package client.impl;
 
 import java.net.SocketAddress;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+
+import javax.crypto.NoSuchPaddingException;
 
 import client.IClientProtocolHandler;
 import protocol.AbstractProtocolHandler;
@@ -11,6 +15,7 @@ import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;
 import protocol.message.service.file.ServiceFileWriteReply;
 import protocol.message.service.file.ServiceFileWriteRequest;
+import session.client.SessionInfo;
 import util.Cheat;
 
 public abstract class AClientProtocolHandler extends AbstractProtocolHandler implements IClientProtocolHandler {
@@ -20,7 +25,7 @@ public abstract class AClientProtocolHandler extends AbstractProtocolHandler imp
 	}
 
 	@Override
-	public CompletableFuture<String> sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request) {
+	public CompletableFuture<String> sendServiceFileRead(SocketAddress to, ServiceFileReadRequest request, SessionInfo info) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 		Cheat.LOGGER.log(Level.FINEST, request + " ignored.");
 		return CompletableFuture.completedFuture(null);
 	}

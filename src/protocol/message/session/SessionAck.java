@@ -36,7 +36,6 @@ public class SessionAck extends AbstractSessionMessage {
 	public void writeToBuff(SerializerBuffer ms, Cipher cipher) throws ShortBufferException, IllegalBlockSizeException,
 			BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
 		SerializerBuffer clearBuffer = new SerializerBuffer();
-		
 		ms.putLong(id);
 		destinationNonce.writeToBuff(clearBuffer);
 		clearBuffer.flip();

@@ -3,8 +3,10 @@ package service.file.impl;
 import java.net.SocketAddress;
 import java.util.logging.Level;
 
+import javax.crypto.Cipher;
+
 import certification.ICertificationStorer;
-import certification.client.impl.ConnectedCertificationClientProtocolHandler;
+import protocol.AbstractProtocolHandler;
 import protocol.NetworkWriter;
 import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;
@@ -13,21 +15,26 @@ import protocol.message.service.file.ServiceFileWriteRequest;
 import service.file.IFileService;
 import service.file.IFileServiceProtocolHandler;
 import service.file.IFileServiceProvider;
+import session.client.ISessionManager;
 import util.Cheat;
 
-public class AFileServiceProtocolHandler extends ConnectedCertificationClientProtocolHandler implements IFileServiceProtocolHandler {
+public class AFileServiceProtocolHandler extends AbstractProtocolHandler implements IFileServiceProtocolHandler {
 	
 	protected final IFileService service;
 	protected final IFileServiceProvider provider;
+	protected final ISessionManager sessionManager;
+	protected final ICertificationStorer storer;
 	
-	public AFileServiceProtocolHandler(IFileService service, ICertificationStorer storer, IFileServiceProvider provider, NetworkWriter networkWriter) {
-		super(networkWriter, storer);
+	public AFileServiceProtocolHandler(IFileService service, ICertificationStorer storer, IFileServiceProvider provider, ISessionManager sessionManager, NetworkWriter networkWriter) {
+		super(networkWriter);
 		this.service = service;
 		this.provider = provider;
+		this.sessionManager = sessionManager;
+		this.storer = storer;
 	}
 	
 	@Override
-	public void handleServiceFileRead(SocketAddress from, ServiceFileReadRequest request) {
+	public void handleServiceFileRead(SocketAddress from, ServiceFileReadRequest request, Cipher cipher) {
 		Cheat.LOGGER.log(Level.FINEST, request + " ignored.");
 	}
 

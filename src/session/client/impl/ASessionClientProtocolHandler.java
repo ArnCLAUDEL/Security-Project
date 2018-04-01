@@ -1,6 +1,8 @@
 package session.client.impl;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import javax.crypto.Cipher;
@@ -15,6 +17,7 @@ import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
 import session.client.ISessionClientProtocolHandler;
 import session.client.ISessionManager;
+import session.client.SessionIdentifier;
 import session.client.SessionInfo;
 import util.Cheat;
 
@@ -30,8 +33,9 @@ public abstract class ASessionClientProtocolHandler extends AbstractProtocolHand
 	}
 
 	@Override
-	public void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
+	public Future<SessionIdentifier> sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
 		Cheat.LOGGER.log(Level.FINEST, request + " ignored.");
+		return CompletableFuture.completedFuture(null);
 	}
 
 	@Override

@@ -5,11 +5,10 @@ import java.io.IOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 
 import protocol.Flag;
-import protocol.message.Message;
 import util.Creator;
 import util.SerializerBuffer;
 
-public class CertReply extends Message {
+public class CertReply extends AbstractCertificationMessage {
 	public final static Creator<CertReply> CREATOR = CertReply::new;
 	
 	private String alias;
@@ -19,8 +18,8 @@ public class CertReply extends Message {
 		super(Flag.CERT_REPLY);
 	}
 	
-	public CertReply(String alias, X509CertificateHolder holder) {
-		this();
+	public CertReply(long id, String alias, X509CertificateHolder holder) {
+		super(Flag.CERT_REPLY, id);
 		this.alias = alias;
 		this.holder = holder;
 	}
@@ -36,6 +35,7 @@ public class CertReply extends Message {
 	@Override
 	public void writeToBuff(SerializerBuffer ms) {
 		try {
+			ms.putLong(id);
 			ms.putString(alias);
 			byte[] encoded = holder.getEncoded();
 			ms.putInt(encoded.length);
@@ -48,6 +48,7 @@ public class CertReply extends Message {
 	@Override
 	public void readFromBuff(SerializerBuffer ms) {
 		try { 
+			this.id = ms.getLong();
 			this.alias = ms.getString();
 			int length = ms.getInt();
 			byte[] encoded = new byte[length];

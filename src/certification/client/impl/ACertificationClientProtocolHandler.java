@@ -1,7 +1,11 @@
 package certification.client.impl;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
+
+import org.bouncycastle.cert.X509CertificateHolder;
 
 import certification.ICertificationStorer;
 import certification.client.ICertificationClientProtocolHandler;
@@ -22,13 +26,15 @@ public class ACertificationClientProtocolHandler extends AbstractProtocolHandler
 	}
 	
 	@Override
-	public void sendAuthRequest(SocketAddress to, AuthRequest request) {
+	public Future<X509CertificateHolder> sendAuthRequest(SocketAddress to, AuthRequest request) {
 		Cheat.LOGGER.log(Level.FINEST, request + " ignored.");
+		return CompletableFuture.completedFuture(null);
 	}
 
 	@Override
-	public void sendCertRequest(SocketAddress to, CertRequest request) {
+	public Future<X509CertificateHolder> sendCertRequest(SocketAddress to, CertRequest request) {
 		Cheat.LOGGER.log(Level.FINEST, request + " ignored.");
+		return CompletableFuture.completedFuture(null);
 	}
 
 	@Override

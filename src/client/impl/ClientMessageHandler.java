@@ -123,7 +123,18 @@ public class ClientMessageHandler extends AbstractMessageHandler {
 	}
 	
 	private void handleServiceFileRead() { 
-		handleMessage(serializerBuffer, ServiceFileReadReply.CREATOR, address, clientProtocolHandler::handleServiceFileRead);
+		try {
+			int position = serializerBuffer.position();
+			long requestId = serializerBuffer.getLong();
+			long sessionId = serializerBuffer.getLong();
+			serializerBuffer.position(position);
+			Optional<SecretKey> secretKey = sessionManager.getSessionInfo(sessionId).getSecretKey();
+			Cipher aesCipher = Cipher.getInstance("AES");
+			aesCipher.init(Cipher.DECRYPT_MODE, secretKey.get());
+			handleEncryptedMessage(serializerBuffer, ServiceFileReadReply.CREATOR, address, aesCipher, clientProtocolHandler::handleServiceFileRead);
+		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
+			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionOk", e);
+		}
 	}
 	
 	private void handleServiceFileWrite() { 

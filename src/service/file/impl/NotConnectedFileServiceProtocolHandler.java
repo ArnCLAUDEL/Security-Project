@@ -7,7 +7,7 @@ import service.file.IFileServiceProvider;
 public class NotConnectedFileServiceProtocolHandler extends AFileServiceProtocolHandler {
 
 	public NotConnectedFileServiceProtocolHandler(ICertificationStorer storer, IFileService service, IFileServiceProvider provider) {
-		super(service, storer, provider, null);
+		super(service, storer, provider, null, null);
 	}
 
 }

@@ -1,6 +1,7 @@
 package session.client;
 
 import java.net.SocketAddress;
+import java.util.concurrent.Future;
 
 import javax.crypto.Cipher;
 
@@ -11,7 +12,7 @@ import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
 
 public interface ISessionClientProtocolHandler {
-	void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info);
+	Future<SessionIdentifier> sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info);
 	void handleSessionReply(SocketAddress from, SessionReply reply);
 	void sendSessionInit(SocketAddress to, SessionInit init, Cipher cipher);
 	void handleSessionInit(SocketAddress from, SessionInit init);

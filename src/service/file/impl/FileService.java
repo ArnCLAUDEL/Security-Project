@@ -14,11 +14,13 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 
 import certification.BaseCertificationRequest;
@@ -43,6 +45,7 @@ import service.file.IFileService;
 import service.file.IFileServiceProtocolHandler;
 import service.file.IFileServiceProvider;
 import session.client.ISessionClientProtocolHandler;
+import session.client.SessionIdentifier;
 import session.client.SessionInfo;
 import session.client.impl.ConnectedSessionClientProtocolHandler;
 import session.client.impl.NotConnectedSessionClientProtocolHandler;
@@ -76,12 +79,12 @@ public class FileService extends ACertificationClient implements IFileService {
 		BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
 		String filename = "request_" + name;
 		applicant.saveCSR(request, filename);
-		sendAuthRequest(caAddress, new AuthRequest(filename, name));
+		sendAuthRequest(caAddress, new AuthRequest(Cheat.getId(), filename, name));
 	}
 	
 	@Override
-	public void retrieveCertificate(String alias) {
-		sendCertRequest(caAddress, new CertRequest(alias));
+	public Future<X509CertificateHolder> retrieveCertificate(String alias) {
+		return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
 	}	
 	
 	@Override
@@ -98,7 +101,7 @@ public class FileService extends ACertificationClient implements IFileService {
 		serverSocketChannel.bind(localAddress);
 		networkHandlerTCP = new FileServiceTCPNetworkHandler(serverSocketChannel, this, privateRSACipher);
 		addHandler(networkHandlerTCP);
-		fileServiceProtocolHandler = new ConnectedFileServiceProtocolHandler(this, storer, fileServiceProvider, networkHandlerTCP);
+		fileServiceProtocolHandler = new ConnectedFileServiceProtocolHandler(this, storer, fileServiceProvider, sessionManager, networkHandlerTCP);
 	}
 	
 	@Override
@@ -112,8 +115,13 @@ public class FileService extends ACertificationClient implements IFileService {
 	}
 	
 	@Override
-	public void sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
-		sessionProtocolHandler.sendSessionRequest(to, request, info);
+	public boolean checkSessionIdentifier(SessionIdentifier sessionIdentifier) {
+		return sessionManager.checkSessionIdentifier(sessionIdentifier);
+	}
+	
+	@Override
+	public Future<SessionIdentifier> sendSessionRequest(SocketAddress to, SessionRequest request, SessionInfo info) {
+		return sessionProtocolHandler.sendSessionRequest(to, request, info);
 	}
 
 	@Override
@@ -152,13 +160,13 @@ public class FileService extends ACertificationClient implements IFileService {
 	}
 
 	@Override
-	public void sendAuthRequest(SocketAddress to, AuthRequest request) {
-		certificationProtocolHandler.sendAuthRequest(to, request);
+	public Future<X509CertificateHolder> sendAuthRequest(SocketAddress to, AuthRequest request) {
+		return certificationProtocolHandler.sendAuthRequest(to, request);
 	}
 	
 	@Override
-	public void sendCertRequest(SocketAddress to, CertRequest request) {
-		certificationProtocolHandler.sendCertRequest(to, request);
+	public Future<X509CertificateHolder> sendCertRequest(SocketAddress to, CertRequest request) {
+		return certificationProtocolHandler.sendCertRequest(to, request);
 	}
 
 	@Override
@@ -172,8 +180,8 @@ public class FileService extends ACertificationClient implements IFileService {
 	}
 
 	@Override
-	public void handleServiceFileRead(SocketAddress from, ServiceFileReadRequest request) {
-		fileServiceProtocolHandler.handleServiceFileRead(from, request);
+	public void handleServiceFileRead(SocketAddress from, ServiceFileReadRequest request, Cipher cipher) {
+		fileServiceProtocolHandler.handleServiceFileRead(from, request, cipher);
 	}
 
 	@Override

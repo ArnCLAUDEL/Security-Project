@@ -1,11 +1,10 @@
 package protocol.message.certification;
 
 import protocol.Flag;
-import protocol.message.Message;
 import util.Creator;
 import util.SerializerBuffer;
 
-public class AuthRequest extends Message {
+public class AuthRequest extends AbstractCertificationMessage {
 	public final static Creator<AuthRequest> CREATOR = AuthRequest::new;
 	
 	private String filename;
@@ -15,8 +14,8 @@ public class AuthRequest extends Message {
 		super(Flag.AUTH_REQUEST);
 	}
 	
-	public AuthRequest(String filename, String alias) {
-		this();
+	public AuthRequest(long id, String filename, String alias) {
+		super(Flag.AUTH_REQUEST, id);
 		this.filename = filename;
 		this.alias = alias;
 	}
@@ -31,12 +30,14 @@ public class AuthRequest extends Message {
 
 	@Override
 	public void writeToBuff(SerializerBuffer ms) {
+		ms.putLong(id);
 		ms.putString(filename);
 		ms.putString(alias);
 	}
 
 	@Override
 	public void readFromBuff(SerializerBuffer ms) {
+		this.id = ms.getLong();
 		this.filename = ms.getString();
 		this.alias = ms.getString();
 	}

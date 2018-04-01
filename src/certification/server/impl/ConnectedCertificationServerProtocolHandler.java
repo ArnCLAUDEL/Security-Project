@@ -44,7 +44,7 @@ public class ConnectedCertificationServerProtocolHandler extends ACertificationS
 			storer.storeCertificate(request.getAlias(), holder);
 			storer.save();
 			Cheat.LOGGER.log(Level.INFO, "Certificate stored with alias : " + request.getAlias());
-			sendAuthReply(from, new AuthReply(request.getAlias(), holder));
+			sendAuthReply(from, new AuthReply(request.getId(), request.getAlias(), holder));
 		} catch (IOException | ClassNotFoundException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException | OperatorCreationException | CertificateException | KeyStoreException e) {
 			Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
 		}
@@ -55,7 +55,7 @@ public class ConnectedCertificationServerProtocolHandler extends ACertificationS
 		try {
 			X509CertificateHolder holder = storer.getCertificate(request.getAlias());
 			
-			sendCertReply(from, new CertReply(request.getAlias(), holder));
+			sendCertReply(from, new CertReply(request.getId(), request.getAlias(), holder));
 		} catch (CertificateEncodingException | KeyStoreException | IOException e) {
 			Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
 		} catch (NoSuchElementException e) {

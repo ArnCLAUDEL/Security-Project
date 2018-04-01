@@ -48,6 +48,13 @@ public class Nonce implements Comparable<Nonce>, MySerializable {
 	}
 	
 	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof Nonce))
+			return false;
+		return id == ((Nonce) obj).id;
+	}
+	
+	@Override
 	public int compareTo(Nonce n) {
 		return (int) (id-n.id);
 	}

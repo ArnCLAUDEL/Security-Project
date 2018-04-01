@@ -30,6 +30,7 @@ public class Cheat {
 		logger.addHandler(consoleHandler);
 		logger.setLevel(level);
 		logger.setUseParentHandlers(false);
+		Logging.setLoggerLevelDisplay(level);
 	}
 	
 	private void httpRequest() {

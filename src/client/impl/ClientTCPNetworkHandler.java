@@ -42,6 +42,7 @@ public class ClientTCPNetworkHandler extends AbstractTCPNetworkHandler implement
 		addChannel(channel, SelectionKey.OP_READ);
 		SerializerBuffer serializerBuffer = getSerializerBuffer(channel);
 		register(channel, serializerBuffer);
+		Cheat.LOGGER.log(Level.INFO, "Connected to " + address);
 	}
 
 	@Override
