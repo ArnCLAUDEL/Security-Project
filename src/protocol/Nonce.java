@@ -30,7 +30,7 @@ public class Nonce implements Comparable<Nonce>, MySerializable {
 	}
 	
 	public boolean validate(Nonce nonce) {
-		return id == nonce.id -1;
+		return (id-1) == nonce.id;
 	}
 	
 	public long getValue() {

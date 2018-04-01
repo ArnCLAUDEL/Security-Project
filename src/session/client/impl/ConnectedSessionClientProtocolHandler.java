@@ -113,12 +113,12 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 	public void handleSessionOk(SocketAddress from, SessionOk ok) {
 		SessionInfo info = sessionManager.getSessionInfo(ok.getId());
 		if(!info.getDestinationNonce().isPresent())
-			Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " has no nonce 2.");
+			Cheat.LOGGER.log(Level.WARNING, "Session " + info.getId() + " has no nonce set.");
 		else {
 			if(info.getDestinationNonce().get().validate(ok.getSenderNonce())) {
 				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " validated");
 			} else {
-				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " rejected, incorrect nonce.");
+				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " rejected, incorrect nonce : " + ok.getSenderNonce().getValue() + " != " + info.getDestinationNonce().get().getValue());
 			}
 		}
 		
