@@ -106,7 +106,7 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 			aesCipherSender.init(Cipher.ENCRYPT_MODE, info.getSecretKey().get());
 			sendSessionOk(from, new SessionOk(info.getId(), Nonce.generateFrom(ack.getDestinationNonce())), aesCipherSender);
 		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
-			Cheat.LOGGER.log(Level.SEVERE, "Error while handling SessionInit.", e);
+			Cheat.LOGGER.log(Level.SEVERE, "Error while handling SessionAck.", e);
 		}
 	}
 
@@ -114,7 +114,7 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 	public void handleSessionOk(SocketAddress from, SessionOk ok) {
 		SessionInfo info = sessionManager.getSessionInfo(ok.getId());
 		if(!info.getDestinationNonce().isPresent())
-			Cheat.LOGGER.log(Level.WARNING, "Session " + info.getId() + " has no nonce set.");
+			Cheat.LOGGER.log(Level.WARNING, "Session " + info.getId() + " has not set a nonce.");
 		else {
 			if(info.getDestinationNonce().get().validate(ok.getSenderNonce())) {
 				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " validated");

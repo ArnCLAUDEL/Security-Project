@@ -15,6 +15,7 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -68,7 +69,6 @@ public class Client extends ACertificationClient implements IClient {
 	private ClientUDPNetworkHandler networkHandlerUDP;
 	private ClientTCPNetworkHandler networkHandlerTCP;
 	
-	
 	public Client(String name, String keyStoreAlias, SocketAddress localAddress, SocketAddress caAddress, SocketAddress fileServiceAddress, SocketAddress sessionServerAddress) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException {
 		super(name, keyStoreAlias, localAddress, caAddress);
 		this.sessionProtocolHandler = new NotConnectedSessionClientProtocolHandler();
@@ -91,8 +91,13 @@ public class Client extends ACertificationClient implements IClient {
 	}
 	
 	@Override
-	public Future<X509CertificateHolder> retrieveCertificate(String alias) {
-		return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
+	public Future<X509CertificateHolder> retrieveCertificate(String alias) throws CertificateEncodingException, KeyStoreException, IOException {
+		try {
+			X509CertificateHolder holder = storer.getCertificate(alias);
+			return CompletableFuture.completedFuture(holder);
+		} catch (NoSuchElementException e) {
+			return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
+		}		
 	}
 	
 	@Override

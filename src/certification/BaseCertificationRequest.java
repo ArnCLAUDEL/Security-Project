@@ -9,52 +9,71 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Security;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.Random;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
+/**
+ * {@code BaseCertificationRequest} represents a lightweight certification request.
+ * It only contains two informations : the subject's name and the subject's {@link RSAPublicKeySpec}.<br />
+ * This object can easily be read/written from/to a file.
+ */
 public class BaseCertificationRequest {	
-	private final static Random RAND = new Random();
 	
+	/**
+	 * The subject's name
+	 */
 	private final String subject;
+	
+	/**
+	 * The subject's public key
+	 */
 	private final RSAPublicKeySpec pubKeySpec;
 	
+	/**
+	 * Creates a new instance with the given subject's name and {@link RSAPublicKeySpec}.
+	 * @param subject The subject's name
+	 * @param pubKeySpec The subject's public key
+	 */
 	public BaseCertificationRequest(String subject, RSAPublicKeySpec pubKeySpec) {
 		this.subject = subject;
 		this.pubKeySpec = pubKeySpec;
 	}
 	
-	public static void main(String[] args) throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, IOException {
-		Security.addProvider(new BouncyCastleProvider());
-		RSAPublicKeySpec spec = new RSAPublicKeySpec(getBig(), getBig());
-		String subject = "Server of Services";
-		BaseCertificationRequest bcr = new BaseCertificationRequest(subject, spec);
-		bcr.writeTo(new FileOutputStream(new File("request")));
-	}
-	
-	private static BigInteger getBig() {
-		return BigInteger.valueOf(RAND.nextLong()).pow(1 << 4);
-	}
-	
+	/**
+	 * Returns the subject's name.
+	 * @return The subject's name
+	 */
 	public String getSubject() {
 		return subject;
 	}
 
+	/**
+	 * Returns the suject's public key.
+	 * @return The subject's public key
+	 */
 	public RSAPublicKeySpec getPubKeySpec() {
 		return pubKeySpec;
 	}
 	
+	/**
+	 * Writes this request to the given file.<br />
+	 * The subject's name is first written, then it's followed by
+	 * the modulus and public exponent of the subject's public key.
+	 * @param filename The file to write to
+	 * @throws IOException
+	 */
 	public void writeTo(String filename) throws IOException {
 		File file = new File(filename);
 		FileOutputStream out = new FileOutputStream(file);
 		writeTo(out);
 	}
 
+	/**
+	 * Writes this request to the given {@link OutputStream}.<br />
+	 * The subject's name is first written, then it's followed by
+	 * the modulus and public exponent of the subject's public key.
+	 * @param dst The outputStream to write to
+	 * @throws IOException
+	 */
 	public void writeTo(OutputStream dst) throws IOException {
 		ObjectOutputStream out = new ObjectOutputStream(dst);	
 		
@@ -73,12 +92,30 @@ public class BaseCertificationRequest {
 		out.close();
 	}
 	
+	/**
+	 * Reads the request from the given file.<br />
+	 * The subject's name is first read, then it's followed by
+	 * the modulus and public exponent of the subject's public key.
+	 * @param filename The file to read from
+	 * @return The request with the informations from the file
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public static BaseCertificationRequest readFrom(String filename) throws IOException, ClassNotFoundException {
 		File file = new File(filename);
 		FileInputStream in = new FileInputStream(file);
 		return readFrom(in);
 	}
 
+	/**
+	 * Reads the request from the input source.<br />
+	 * The subject's name is first read, then it's followed by
+	 * the modulus and public exponent of the subject's public key.
+	 * @param filename The file to read from
+	 * @return The request with the informations from the file
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public static BaseCertificationRequest readFrom(InputStream from) throws IOException, ClassNotFoundException{
 		ObjectInputStream in = new ObjectInputStream(from);
 		

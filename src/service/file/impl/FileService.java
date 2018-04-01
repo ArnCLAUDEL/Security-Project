@@ -10,10 +10,13 @@ import java.security.KeyFactory;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.NoSuchElementException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 
@@ -83,8 +86,13 @@ public class FileService extends ACertificationClient implements IFileService {
 	}
 	
 	@Override
-	public Future<X509CertificateHolder> retrieveCertificate(String alias) {
-		return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
+	public Future<X509CertificateHolder> retrieveCertificate(String alias) throws CertificateEncodingException, KeyStoreException, IOException {
+		try {
+			X509CertificateHolder holder = storer.getCertificate(alias);
+			return CompletableFuture.completedFuture(holder);
+		} catch (NoSuchElementException e) {
+			return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
+		}
 	}	
 	
 	@Override
