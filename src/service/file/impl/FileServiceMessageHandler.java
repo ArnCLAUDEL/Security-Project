@@ -14,8 +14,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
 
 import certification.client.ICertificationClientProtocolHandler;
-import protocol.AbstractMessageHandler;
 import protocol.Flag;
+import protocol.message.AbstractMessageHandler;
 import protocol.message.certification.AuthReply;
 import protocol.message.certification.CertReply;
 import protocol.message.service.file.ServiceFileReadRequest;

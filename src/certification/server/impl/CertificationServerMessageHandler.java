@@ -4,8 +4,8 @@ import java.net.SocketAddress;
 import java.util.logging.Level;
 
 import certification.server.ICertificationServerProtocolHandler;
-import protocol.AbstractMessageHandler;
 import protocol.Flag;
+import protocol.message.AbstractMessageHandler;
 import protocol.message.certification.AuthRequest;
 import protocol.message.certification.CertRequest;
 import protocol.message.session.SessionRequest;
