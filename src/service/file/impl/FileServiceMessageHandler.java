@@ -3,6 +3,7 @@ package service.file.impl;
 import java.net.SocketAddress;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -87,45 +88,51 @@ public class FileServiceMessageHandler extends AbstractMessageHandler {
 	}
 	
 	private void handleSessionAck() {
+		int position = serializerBuffer.position();
+		long id = serializerBuffer.getLong();
+		serializerBuffer.position(position);
+		
 		try {
-			int position = serializerBuffer.position();
-			long id = serializerBuffer.getLong();
-			serializerBuffer.position(position);
 			Optional<SecretKey> secretKey = sessionManager.getSessionInfo(id).getSecretKey();
 			Cipher aesCipher = Cipher.getInstance("AES");
 			aesCipher.init(Cipher.DECRYPT_MODE, secretKey.get());
 			handleEncryptedMessage(serializerBuffer, SessionAck.CREATOR, address, aesCipher, sessionProtocolHandler::handleSessionAck);
-		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
-			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionAck", e);
+		} catch (NoSuchElementException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
+			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionOk", e);
+			sessionManager.deleteSession(id);
 		}
 	}
 	
 	private void handleSessionOk() {
+		int position = serializerBuffer.position();
+		long id = serializerBuffer.getLong();
+		serializerBuffer.position(position);
+		
 		try {
-			int position = serializerBuffer.position();
-			long id = serializerBuffer.getLong();
-			serializerBuffer.position(position);
 			Optional<SecretKey> secretKey = sessionManager.getSessionInfo(id).getSecretKey();
 			Cipher aesCipher = Cipher.getInstance("AES");
 			aesCipher.init(Cipher.DECRYPT_MODE, secretKey.get());
 			handleEncryptedMessage(serializerBuffer, SessionOk.CREATOR, address, aesCipher, sessionProtocolHandler::handleSessionOk);
-		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (NoSuchElementException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
 			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionOk", e);
+			sessionManager.deleteSession(id);
 		}
 	}
 	
 	private void handleServiceFileRead() { 
+		int position = serializerBuffer.position();
+		long requestId = serializerBuffer.getLong();
+		long sessionId = serializerBuffer.getLong();
+		serializerBuffer.position(position);
+		
 		try {
-			int position = serializerBuffer.position();
-			long requestId = serializerBuffer.getLong();
-			long sessionId = serializerBuffer.getLong();
-			serializerBuffer.position(position);
 			Optional<SecretKey> secretKey = sessionManager.getSessionInfo(sessionId).getSecretKey();
 			Cipher aesCipher = Cipher.getInstance("AES");
 			aesCipher.init(Cipher.DECRYPT_MODE, secretKey.get());
 			handleEncryptedMessage(serializerBuffer, ServiceFileReadRequest.CREATOR, address, aesCipher, fileServiceProtocolHandler::handleServiceFileRead);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
-			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionAck", e);
+		} catch (NoSuchElementException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
+			Cheat.LOGGER.log(Level.WARNING, "Error while building SessionOk", e);
+			sessionManager.deleteSession(sessionId);
 		}
 	}
 	

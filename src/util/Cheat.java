@@ -14,7 +14,7 @@ public class Cheat {
 	public static final long DEFAULT_ID = -1;
 	public final static Random RANDOM = new Random();
 	public final static Charset CHARSET = Charset.forName("UTF-8");
-	public final static Logger LOGGER = Logger.getLogger("WEB-CRAWLER");
+	public final static Logger LOGGER = Logger.getLogger("Securiry-Project");
 	
 	public static void setLoggerLevelDisplay(Level level) {
 		setLoggerLevelDisplay(LOGGER, level);

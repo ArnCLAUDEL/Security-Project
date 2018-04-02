@@ -53,7 +53,7 @@ import protocol.message.session.SessionRequest;
 import session.client.ISessionClientProtocolHandler;
 import session.client.SessionIdentifier;
 import session.client.SessionInfo;
-import session.client.impl.ConnectedSessionClientProtocolHandler;
+import session.client.impl.InvalidSessionKeyConnectedSessionClientProtocolHandler;
 import util.Cheat;
 import util.KeyGenerator;
 import util.SerializerBuffer;
@@ -232,7 +232,7 @@ public class Client extends ACertificationClient implements IClient {
 			addHandler(networkHandlerUDP);
 			
 			certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer, KeyGenerator.bcrsaPublicKeyConverter(certificationServerCertificate));
-			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
+			sessionProtocolHandler = new InvalidSessionKeyConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
 			
 			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.bind(localAddress);
@@ -279,5 +279,10 @@ public class Client extends ACertificationClient implements IClient {
 		IClient client = new Client("arnaud", "store_client", "root-certification-authority", new InetSocketAddress(8889), new InetSocketAddress(8888), new InetSocketAddress(8890), new InetSocketAddress(8888));
 		new Thread(client).start();
 		client.makeCertificationRequest();
+	}
+
+	@Override
+	public void deleteSession(long id) {
+		sessionManager.deleteSession(id);
 	}	
 }

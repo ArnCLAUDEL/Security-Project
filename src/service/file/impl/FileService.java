@@ -131,6 +131,11 @@ public class FileService extends ACertificationClient implements IFileService {
 	}
 	
 	@Override
+	public void deleteSession(long id) {
+		sessionManager.deleteSession(id);
+	}
+	
+	@Override
 	public boolean checkSessionIdentifier(SessionIdentifier sessionIdentifier) {
 		return sessionManager.checkSessionIdentifier(sessionIdentifier);
 	}

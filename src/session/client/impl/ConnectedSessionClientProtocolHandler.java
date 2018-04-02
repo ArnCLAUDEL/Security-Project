@@ -119,6 +119,7 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 			if(info.getDestinationNonce().get().validate(ok.getSenderNonce())) {
 				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " validated");
 			} else {
+				sessionManager.deleteSession(info.getId());
 				Cheat.LOGGER.log(Level.INFO, "Session " + info.getId() + " rejected, incorrect nonce : " + ok.getSenderNonce().getValue() + " != " + info.getDestinationNonce().get().getValue());
 			}
 		}

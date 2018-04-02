@@ -2,10 +2,13 @@ package session.client.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.logging.Level;
 
 import session.client.ISessionManager;
 import session.client.SessionIdentifier;
 import session.client.SessionInfo;
+import util.Cheat;
 
 public class SessionManager implements ISessionManager {
 
@@ -16,7 +19,9 @@ public class SessionManager implements ISessionManager {
 	}
 	
 	@Override
-	public SessionInfo getSessionInfo(long id) {
+	public SessionInfo getSessionInfo(long id) throws NoSuchElementException {
+		if(!idSessions.containsKey(id))
+			throw new NoSuchElementException("Session " + id + " not found.");
 		return idSessions.get(id);
 	}
 
@@ -24,8 +29,16 @@ public class SessionManager implements ISessionManager {
 	public boolean createSession(long id, SessionInfo info) {
 		if(idSessions.containsKey(id))
 			return false;
+		
+		Cheat.LOGGER.log(Level.INFO, "Session " + id + " created.");
 		idSessions.put(id, info);
 		return true;
+	}
+	
+	@Override
+	public void deleteSession(long id) {
+		idSessions.remove(id);
+		Cheat.LOGGER.log(Level.INFO, "Session " + id + " deleted.");
 	}
 
 	@Override

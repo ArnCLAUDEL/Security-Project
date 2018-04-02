@@ -27,6 +27,8 @@ public interface ISessionManager {
 	 */
 	boolean createSession(long id, SessionInfo info);
 	
+	void deleteSession(long id);
+	
 	/**
 	 * Verifies if the session represented by the given {@link SessionIdentifier}
 	 * exists and is valid. 
