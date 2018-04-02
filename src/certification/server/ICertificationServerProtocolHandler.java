@@ -1,7 +1,6 @@
 package certification.server;
 
 import java.net.SocketAddress;
-import java.util.concurrent.Future;
 
 import protocol.message.certification.AuthReply;
 import protocol.message.certification.AuthRequest;

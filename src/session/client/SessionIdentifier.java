@@ -11,7 +11,7 @@ import util.SerializerBuffer;
  * {@code SessionIdentifier} represents a session with only two informations 
  * : the id and the associated {@link Nonce}.<br />
  * This object can be used to avoid sending an entire {@link SessionInfo} in
- * a session message. This can be used retrieved in a local {@link SessionManager}
+ * a session message. This can be used to retrieve in a local {@link SessionManager}
  * the session key to decrypt an encrypted session message.
  */
 public class SessionIdentifier implements MySerializable {
