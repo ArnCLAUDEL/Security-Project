@@ -53,11 +53,11 @@ import session.client.SessionInfo;
 import session.client.impl.ConnectedSessionClientProtocolHandler;
 import session.client.impl.NotConnectedSessionClientProtocolHandler;
 import util.Cheat;
+import util.KeyGenerator;
 
 public class FileService extends ACertificationClient implements IFileService {
 
 	private final IFileServiceProvider fileServiceProvider;
-	private final Cipher privateRSACipher;
 	
 	private ISessionClientProtocolHandler sessionProtocolHandler;
 	private ICertificationClientProtocolHandler certificationProtocolHandler;
@@ -65,24 +65,27 @@ public class FileService extends ACertificationClient implements IFileService {
 	private FileServiceTCPNetworkHandler networkHandlerTCP;
 	private FileServiceUDPNetworkHandler networkHandlerUDP;
 		
-	public FileService(String name, String keyStoreAlias, SocketAddress localAddress, SocketAddress caAddress) throws NoSuchProviderException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, NoSuchPaddingException {
-		super(name, keyStoreAlias, localAddress, caAddress);
+	public FileService(String name, String keyStoreAlias, String certificationServerAlias, SocketAddress localAddress, SocketAddress caAddress) throws NoSuchProviderException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, NoSuchPaddingException {
+		super(name, keyStoreAlias, certificationServerAlias, localAddress, caAddress);
 		this.fileServiceProvider = new FileServiceProvider();
 		this.sessionProtocolHandler = new NotConnectedSessionClientProtocolHandler();
 		this.fileServiceProtocolHandler = new NotConnectedFileServiceProtocolHandler(storer, this, fileServiceProvider);
 		this.certificationProtocolHandler = new NotConnectedCertificationClientProtocolHandler(storer);
-		this.privateRSACipher = Cipher.getInstance("RSA");
-		this.privateRSACipher.init(Cipher.PRIVATE_KEY, keys.getPrivate());
 	}
 	
 	@Override
-	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-		X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
-		BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
-		BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
-		String filename = "request_" + name;
-		applicant.saveCSR(request, filename);
-		sendAuthRequest(caAddress, new AuthRequest(Cheat.getId(), filename, name));
+	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, IOException, NoSuchPaddingException, CertificateEncodingException, KeyStoreException {
+		try {
+			X509CertificateHolder certificationServerCertificate = storer.getCertificate(certificationServerAlias);
+			X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
+			BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
+			BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
+			String filename = "request_" + name;
+			applicant.saveCSR(request, filename);
+			sendAuthRequest(caAddress, new AuthRequest(Cheat.getId(), filename, name));
+		} catch (NoSuchElementException e) {
+			Cheat.LOGGER.log(Level.SEVERE, "Certification server certificate not found", e);
+		}
 	}
 	
 	@Override
@@ -97,19 +100,24 @@ public class FileService extends ACertificationClient implements IFileService {
 	
 	@Override
 	protected void start() throws IOException {
-		active = true;
-		DatagramChannel datagramChannel = DatagramChannel.open();
-		datagramChannel.bind(localAddress);
-		networkHandlerUDP = new FileServiceUDPNetworkHandler(datagramChannel, this, privateRSACipher);
-		addHandler(networkHandlerUDP);
-		certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer);
-		sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
-		
-		ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-		serverSocketChannel.bind(localAddress);
-		networkHandlerTCP = new FileServiceTCPNetworkHandler(serverSocketChannel, this, privateRSACipher);
-		addHandler(networkHandlerTCP);
-		fileServiceProtocolHandler = new ConnectedFileServiceProtocolHandler(this, storer, fileServiceProvider, sessionManager, networkHandlerTCP);
+		try {
+			X509CertificateHolder certificationServerCertificate = storer.getCertificate(certificationServerAlias);
+			active = true;
+			DatagramChannel datagramChannel = DatagramChannel.open();
+			datagramChannel.bind(localAddress);
+			networkHandlerUDP = new FileServiceUDPNetworkHandler(datagramChannel, this, privateRSACipher);
+			addHandler(networkHandlerUDP);
+			certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer, KeyGenerator.bcrsaPublicKeyConverter(certificationServerCertificate));
+			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
+			
+			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+			serverSocketChannel.bind(localAddress);
+			networkHandlerTCP = new FileServiceTCPNetworkHandler(serverSocketChannel, this, privateRSACipher);
+			addHandler(networkHandlerTCP);
+			fileServiceProtocolHandler = new ConnectedFileServiceProtocolHandler(this, storer, fileServiceProvider, sessionManager, networkHandlerTCP);
+		} catch (CertificateEncodingException | KeyStoreException | NoSuchElementException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
+			Cheat.LOGGER.log(Level.SEVERE, "Error while starting..", e);
+		}
 	}
 	
 	@Override
@@ -209,7 +217,7 @@ public class FileService extends ACertificationClient implements IFileService {
 	
 	public static void main(String[] args) throws NoSuchProviderException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException {
 		Cheat.setLoggerLevelDisplay(Level.ALL);
-		FileService service = new FileService("Service-1", "store_service1", new InetSocketAddress(8890), new InetSocketAddress(8888));
+		FileService service = new FileService("Service-1", "store_service1", "root-certification-authority", new InetSocketAddress(8890), new InetSocketAddress(8888));
 		service.start();
 		service.makeCertificationRequest();
 	}

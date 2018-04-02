@@ -33,7 +33,7 @@ import util.KeyGenerator;
 
 public class ConnectedSessionClientProtocolHandler extends ASessionClientProtocolHandler {
 		
-	private final Map<Long, CompletableFuture<SessionIdentifier>> results;
+	protected final Map<Long, CompletableFuture<SessionIdentifier>> results;
 	
 	public ConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, ISessionManager sessionManager) {
 		super(networkWriter, storer, sessionManager);

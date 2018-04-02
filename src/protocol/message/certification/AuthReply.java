@@ -31,7 +31,7 @@ public class AuthReply extends AbstractCertificationMessage {
 	public X509CertificateHolder getCertificateHolder() {
 		return holder;
 	}
-
+	
 	@Override
 	public void writeToBuff(SerializerBuffer ms) {
 		try {

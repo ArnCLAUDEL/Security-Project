@@ -1,10 +1,10 @@
 package protocol.message.session;
 
-import protocol.message.EncryptedMessage;
+import protocol.message.AbstractEncryptedMessage;
 import protocol.message.TrackedMessage;
 import util.MyEncryptedSerializable;
 
-public abstract class AbstractSessionMessage extends EncryptedMessage implements TrackedMessage, MyEncryptedSerializable {
+public abstract class AbstractSessionMessage extends AbstractEncryptedMessage implements TrackedMessage, MyEncryptedSerializable {
 
 	protected long id;
 	

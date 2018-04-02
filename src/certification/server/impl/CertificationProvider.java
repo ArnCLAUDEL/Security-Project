@@ -70,11 +70,11 @@ public class CertificationProvider implements ICertificationProvider {
 	}
 	
 	private ContentSigner getContentSigner() throws OperatorCreationException {
-		return new JcaContentSignerBuilder("SHA512withRSA").setProvider("BC").build(keys.getPrivate());
+		return new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(keys.getPrivate());
 	}
 	
 	private BigInteger getSerial() {
 		return BigInteger.valueOf(new Random().nextLong());
 	}
-
+	
 }

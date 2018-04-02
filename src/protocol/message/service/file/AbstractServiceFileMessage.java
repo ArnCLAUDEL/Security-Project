@@ -10,11 +10,11 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 
-import protocol.message.EncryptedMessage;
+import protocol.message.AbstractEncryptedMessage;
 import session.client.SessionIdentifier;
 import util.SerializerBuffer;
 
-public abstract class AbstractServiceFileMessage extends EncryptedMessage {
+public abstract class AbstractServiceFileMessage extends AbstractEncryptedMessage {
 	protected final static byte OK = 1;
 	protected final static byte ERROR = 2;
 	

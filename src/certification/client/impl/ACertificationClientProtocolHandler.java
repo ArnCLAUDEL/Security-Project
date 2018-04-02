@@ -1,9 +1,12 @@
 package certification.client.impl;
 
 import java.net.SocketAddress;
+import java.security.PublicKey;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
+
+import javax.crypto.Cipher;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 
@@ -19,10 +22,12 @@ import util.Cheat;
 
 public class ACertificationClientProtocolHandler extends AbstractProtocolHandler implements ICertificationClientProtocolHandler {
 	protected final ICertificationStorer storer;
+	protected final PublicKey certificationServerPublicKey;
 	
-	public ACertificationClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer) {
+	public ACertificationClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, PublicKey certificationServerPublicKey) {
 		super(networkWriter);
 		this.storer = storer;
+		this.certificationServerPublicKey = certificationServerPublicKey;
 	}
 	
 	@Override

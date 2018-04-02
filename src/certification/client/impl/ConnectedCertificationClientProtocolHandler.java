@@ -1,15 +1,25 @@
 package certification.client.impl;
 
+import java.io.IOException;
 import java.net.SocketAddress;
+import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.operator.ContentVerifier;
 
 import certification.ICertificationStorer;
 import certification.client.ICertificationClientProtocolHandler;
@@ -24,8 +34,8 @@ public class ConnectedCertificationClientProtocolHandler extends ACertificationC
 	
 	private final Map<Long, CompletableFuture<X509CertificateHolder>> results;
 	
-	public ConnectedCertificationClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer) {
-		super(networkWriter, storer);
+	public ConnectedCertificationClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, PublicKey certificationServerPublicKey) {
+		super(networkWriter, storer, certificationServerPublicKey);
 		this.results = new TreeMap<>();
 	}
 
@@ -49,9 +59,17 @@ public class ConnectedCertificationClientProtocolHandler extends ACertificationC
 	public void handleAuthReply(SocketAddress from, AuthReply reply) {
 		Cheat.LOGGER.log(Level.FINE, "Handling AuthReply..");
 		try {
+			Signature verifier = Signature.getInstance("SHA1withRSA");
+			verifier.initVerify(new JcaX509CertificateConverter().getCertificate(storer.getCertificate("root-certification-authority")));
+
 			storer.storeCertificate(reply.getAlias(), reply.getCertificateHolder());
 			results.get(reply.getId()).complete(reply.getCertificateHolder());
-		} catch (CertificateException | KeyStoreException e) {
+			if(verifier.verify(reply.getCertificateHolder().getSignature())) {
+				Cheat.LOGGER.log(Level.WARNING, "Signature verified.");
+			} else {
+				Cheat.LOGGER.log(Level.WARNING, "Incorrect certificate signature.");
+			}
+		} catch (CertificateException | KeyStoreException | SignatureException | InvalidKeyException | NoSuchAlgorithmException | NoSuchElementException | IOException e) {
 			Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
 		}
 	}

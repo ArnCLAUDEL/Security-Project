@@ -5,7 +5,7 @@ import certification.ICertificationStorer;
 public class NotConnectedCertificationClientProtocolHandler extends ACertificationClientProtocolHandler {
 
 	public NotConnectedCertificationClientProtocolHandler(ICertificationStorer storer) {
-		super(null, storer);
+		super(null, storer, null);
 	}
 
 }

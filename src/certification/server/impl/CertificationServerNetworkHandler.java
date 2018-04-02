@@ -11,6 +11,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.crypto.Cipher;
+
 import io.AbstractUDPNetworkHandler;
 import protocol.NetworkWriter;
 import util.SerializerBuffer;
@@ -18,20 +20,22 @@ import util.SerializerBuffer;
 public class CertificationServerNetworkHandler extends AbstractUDPNetworkHandler implements NetworkWriter {
 	private final static long DEFAULT_SHUTDOWN_DELAY = 36_000;
 	
+	private final Cipher privateRSACipher;
 	private final ExecutorService executor;
 	private final Map<SocketAddress, CertificationServerMessageHandler> messageHandlers;
 	private final CertificationServer certificationAuthority;
 	
-	public CertificationServerNetworkHandler(DatagramChannel channel, CertificationServer certificationAuthority) throws IOException {
+	public CertificationServerNetworkHandler(DatagramChannel channel, CertificationServer certificationAuthority, Cipher privateRSACipher) throws IOException {
 		super(channel, SelectionKey.OP_READ, certificationAuthority);
 		this.certificationAuthority = certificationAuthority;
 		this.executor = Executors.newCachedThreadPool();
 		this.messageHandlers = new HashMap<>();
+		this.privateRSACipher = privateRSACipher;
 	}
 	
 	@Override
 	protected void register(SocketAddress address, SerializerBuffer serializerBuffer) {
-		CertificationServerMessageHandler handler = new CertificationServerMessageHandler(serializerBuffer, certificationAuthority, certificationAuthority,address);
+		CertificationServerMessageHandler handler = new CertificationServerMessageHandler(serializerBuffer, certificationAuthority, certificationAuthority, address, privateRSACipher);
 		executor.execute(handler);
 		// TODO scheduleAutoShutdown(handler);
 		messageHandlers.put(address, handler);

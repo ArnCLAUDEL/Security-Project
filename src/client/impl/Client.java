@@ -54,14 +54,13 @@ import session.client.ISessionClientProtocolHandler;
 import session.client.SessionIdentifier;
 import session.client.SessionInfo;
 import session.client.impl.ConnectedSessionClientProtocolHandler;
-import session.client.impl.NotConnectedSessionClientProtocolHandler;
 import util.Cheat;
+import util.KeyGenerator;
 import util.SerializerBuffer;
 
 public class Client extends ACertificationClient implements IClient {
 	private final SocketAddress fileServiceAddress;
 	private final SocketAddress sessionServerAddress;
-	private final Cipher privateRSACipher;
 	
 	private ISessionClientProtocolHandler sessionProtocolHandler;
 	private IClientProtocolHandler clientProtocolHandler;
@@ -69,35 +68,41 @@ public class Client extends ACertificationClient implements IClient {
 	private ClientUDPNetworkHandler networkHandlerUDP;
 	private ClientTCPNetworkHandler networkHandlerTCP;
 	
-	public Client(String name, String keyStoreAlias, SocketAddress localAddress, SocketAddress caAddress, SocketAddress fileServiceAddress, SocketAddress sessionServerAddress) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException {
-		super(name, keyStoreAlias, localAddress, caAddress);
-		this.sessionProtocolHandler = new NotConnectedSessionClientProtocolHandler();
+	public Client(String name, String keyStoreAlias, String certificationServerAlias, SocketAddress localAddress, SocketAddress caAddress, SocketAddress fileServiceAddress, SocketAddress sessionServerAddress) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException {
+		super(name, keyStoreAlias, certificationServerAlias, localAddress, caAddress);
 		this.clientProtocolHandler = new NotConnectedClientProtocolHandler();
 		this.certificationProtocolHandler = new NotConnectedCertificationClientProtocolHandler(storer);
 		this.fileServiceAddress = fileServiceAddress;
 		this.sessionServerAddress = sessionServerAddress;
-		this.privateRSACipher = Cipher.getInstance("RSA");
-		this.privateRSACipher.init(Cipher.PRIVATE_KEY, keys.getPrivate());
 	}
 	
 	@Override
-	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-		X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
-		BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
-		BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
-		String filename = "request_" + name;
-		applicant.saveCSR(request, filename);
-		sendAuthRequest(caAddress, new AuthRequest(Cheat.getId(), filename, name));
+	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, CertificateEncodingException, KeyStoreException, IOException, NoSuchPaddingException, InvalidKeyException {
+		try {
+			X509CertificateHolder certificationServerCertificate = storer.getCertificate(certificationServerAlias);
+			X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
+			BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
+			BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
+			String filename = "request_" + name;
+			applicant.saveCSR(request, filename);
+			
+			sendAuthRequest(caAddress, new AuthRequest(Cheat.getId(), filename, name));
+		} catch (NoSuchElementException e) {
+			Cheat.LOGGER.log(Level.SEVERE, "Certification server certificate not found", e);
+		}
 	}
 	
 	@Override
 	public Future<X509CertificateHolder> retrieveCertificate(String alias) throws CertificateEncodingException, KeyStoreException, IOException {
+		return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
+		/*
 		try {
 			X509CertificateHolder holder = storer.getCertificate(alias);
 			return CompletableFuture.completedFuture(holder);
 		} catch (NoSuchElementException e) {
 			return sendCertRequest(caAddress, new CertRequest(Cheat.getId(), alias));
-		}		
+		}
+		*/		
 	}
 	
 	@Override
@@ -215,54 +220,63 @@ public class Client extends ACertificationClient implements IClient {
 
 	@Override
 	protected void start() throws IOException {
-		active = true;
 		
-		DatagramChannel datagramChannel = DatagramChannel.open();
-		datagramChannel.bind(localAddress);
-		networkHandlerUDP = new ClientUDPNetworkHandler(datagramChannel, this, privateRSACipher);
-		addHandler(networkHandlerUDP);
-		certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer);
-		sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
-		
-		ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-		serverSocketChannel.bind(localAddress);
-		networkHandlerTCP = new ClientTCPNetworkHandler(serverSocketChannel, this, privateRSACipher);
-		addHandler(networkHandlerTCP);
-		clientProtocolHandler = new ConnectedClientProtocolHandler(networkHandlerTCP);
-		final IClient client = this;
-		
-		networkHandlerTCP.connect(fileServiceAddress);
-		
-		Handler handler = new AbstractKeyboardHandler() {
-			@Override
-			protected void handle(SerializerBuffer serializerBuffer) throws IOException {
-				try {
-					System.out.println("Preparing request..");
-					Future<X509CertificateHolder> futureHolder = client.retrieveCertificate("service-1");
-					System.out.println("Waiting for CertificateHolder..");
-					X509CertificateHolder holder = futureHolder.get();
-					System.out.println("CertificateHolder received..");
-					Future<SessionIdentifier> futureSessionIdentifier = client.requestSession("service-1", holder);
-					System.out.println("Waiting for SessionIdentifier..");
-					SessionIdentifier sessionIdentifier = futureSessionIdentifier.get();
-					System.out.println("SessionIdentifier received..");
-					try {Thread.sleep(1000);}
-					catch (InterruptedException e) {}
-					Future<String> futureResult = readFrom("test.txt", sessionIdentifier);
-					System.out.println("Waiting for result..");
-					String result = futureResult.get();
-					System.out.println("Result received : " + result);
-				} catch (InterruptedException | ExecutionException | CertificateEncodingException | KeyStoreException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
-					Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
+		try {
+			X509CertificateHolder certificationServerCertificate;
+			certificationServerCertificate = storer.getCertificate(certificationServerAlias);
+			active = true;
+			
+			DatagramChannel datagramChannel = DatagramChannel.open();
+			datagramChannel.bind(localAddress);
+			networkHandlerUDP = new ClientUDPNetworkHandler(datagramChannel, this, privateRSACipher);
+			addHandler(networkHandlerUDP);
+			
+			certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer, KeyGenerator.bcrsaPublicKeyConverter(certificationServerCertificate));
+			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
+			
+			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+			serverSocketChannel.bind(localAddress);
+			networkHandlerTCP = new ClientTCPNetworkHandler(serverSocketChannel, this, privateRSACipher);
+			addHandler(networkHandlerTCP);
+			clientProtocolHandler = new ConnectedClientProtocolHandler(networkHandlerTCP);
+			final IClient client = this;
+			
+			networkHandlerTCP.connect(fileServiceAddress);
+			
+			Handler handler = new AbstractKeyboardHandler() {
+				@Override
+				protected void handle(SerializerBuffer serializerBuffer) throws IOException {
+					try {
+						System.out.println("Preparing request..");
+						Future<X509CertificateHolder> futureHolder = client.retrieveCertificate("service-1");
+						System.out.println("Waiting for CertificateHolder..");
+						X509CertificateHolder holder = futureHolder.get();
+						System.out.println("CertificateHolder received..");
+						Future<SessionIdentifier> futureSessionIdentifier = client.requestSession("service-1", holder);
+						System.out.println("Waiting for SessionIdentifier..");
+						SessionIdentifier sessionIdentifier = futureSessionIdentifier.get();
+						System.out.println("SessionIdentifier received..");
+						try {Thread.sleep(1000);}
+						catch (InterruptedException e) {}
+						Future<String> futureResult = readFrom("test.txt", sessionIdentifier);
+						System.out.println("Waiting for result..");
+						String result = futureResult.get();
+						System.out.println("Result received : " + result);
+					} catch (InterruptedException | ExecutionException | CertificateEncodingException | KeyStoreException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+						Cheat.LOGGER.log(Level.WARNING, e.getMessage(), e);
+					}
 				}
-			}
-		};
-		addHandler(handler);
+			};
+			addHandler(handler);
+		} catch (CertificateEncodingException | KeyStoreException | NoSuchElementException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
+			Cheat.LOGGER.log(Level.SEVERE, "Error while starting..", e);
+		}
+		
 	}
 	
 	public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, IOException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException {
 		Cheat.setLoggerLevelDisplay(Level.ALL);
-		IClient client = new Client("arnaud", "store_client", new InetSocketAddress(8889), new InetSocketAddress(8888), new InetSocketAddress(8890), new InetSocketAddress(8888));
+		IClient client = new Client("arnaud", "store_client", "root-certification-authority", new InetSocketAddress(8889), new InetSocketAddress(8888), new InetSocketAddress(8890), new InetSocketAddress(8888));
 		new Thread(client).start();
 		client.makeCertificationRequest();
 	}	

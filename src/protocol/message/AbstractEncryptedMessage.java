@@ -1,10 +1,8 @@
 package protocol.message;
 
-import util.MyEncryptedSerializable;
+public abstract class AbstractEncryptedMessage extends Message implements EncryptedMessage {
 
-public abstract class EncryptedMessage extends Message implements MyEncryptedSerializable {
-
-	public EncryptedMessage(byte flag) {
+	public AbstractEncryptedMessage(byte flag) {
 		super(flag);
 	}
 
