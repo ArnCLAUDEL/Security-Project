@@ -86,7 +86,7 @@ public class CertificationStorer implements ICertificationStorer {
 		scanner.close();
 		return passw;
 		*/
-		return "qwerty".toCharArray();
+		return "azerty".toCharArray();
 	}
 	
 }
