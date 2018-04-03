@@ -43,9 +43,9 @@ keytool -delete -alias key -keystore store_service1 -storepass azerty
 
 ** lancement de la CA **
 
-keytool -exportcert -alias "root-certification-authority" -file ca_cert -keystore store -storepass azerty
-keytool -importcert -alias "root-certification-authority" -file ca_cert -keystore store_client -storepass azerty
-keytool -importcert -alias "root-certification-authority" -file ca_cert -keystore store_service1 -storepass azerty
+keytool -exportcert -alias "root-certification-authority" -file cacert -keystore store -storepass azerty
+keytool -importcert -alias "root-certification-authority" -file cacert -keystore store_client -storepass azerty
+keytool -importcert -alias "root-certification-authority" -file cacert -keystore store_service1 -storepass azerty
 
 ## Lancement
 
