@@ -93,7 +93,7 @@ public class CertificationServer extends AbstractIOEntity implements ICertificat
 	protected void start() throws IOException {
 		DatagramChannel channel = DatagramChannel.open();
 		channel.bind(new InetSocketAddress(8888));
-		networkHandler = new CertificationServerNetworkHandler(channel, this, privateRSACipher);
+		networkHandler = new CertificationServerNetworkHandler(channel, this);
 		active = true;
 		addHandler(networkHandler);
 		sessionProtocolHandler = new ConnectedSessionServerProtocolHandler(networkHandler, sessionProvider, storer);

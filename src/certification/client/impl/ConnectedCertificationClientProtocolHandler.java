@@ -5,7 +5,6 @@ import java.net.SocketAddress;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -19,7 +18,6 @@ import java.util.logging.Level;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.operator.ContentVerifier;
 
 import certification.ICertificationStorer;
 import certification.client.ICertificationClientProtocolHandler;

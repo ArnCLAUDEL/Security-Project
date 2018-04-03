@@ -76,7 +76,7 @@ public class FileService extends ACertificationClient implements IFileService {
 	@Override
 	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, IOException, NoSuchPaddingException, CertificateEncodingException, KeyStoreException {
 		try {
-			X509CertificateHolder certificationServerCertificate = storer.getCertificate(certificationServerAlias);
+			storer.getCertificate(certificationServerAlias);
 			X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
 			BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
 			BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));

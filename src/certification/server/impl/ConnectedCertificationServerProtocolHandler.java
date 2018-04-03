@@ -11,8 +11,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
-import javax.crypto.Cipher;
-
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;

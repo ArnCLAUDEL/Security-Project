@@ -121,7 +121,7 @@ public class FileServiceMessageHandler extends AbstractMessageHandler {
 	
 	private void handleServiceFileRead() { 
 		int position = serializerBuffer.position();
-		long requestId = serializerBuffer.getLong();
+		serializerBuffer.getLong();
 		long sessionId = serializerBuffer.getLong();
 		serializerBuffer.position(position);
 		

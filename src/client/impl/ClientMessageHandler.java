@@ -125,7 +125,7 @@ public class ClientMessageHandler extends AbstractMessageHandler {
 	private void handleServiceFileRead() { 
 		try {
 			int position = serializerBuffer.position();
-			long requestId = serializerBuffer.getLong();
+			serializerBuffer.getLong();
 			long sessionId = serializerBuffer.getLong();
 			serializerBuffer.position(position);
 			Optional<SecretKey> secretKey = sessionManager.getSessionInfo(sessionId).getSecretKey();

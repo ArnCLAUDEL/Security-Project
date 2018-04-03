@@ -10,6 +10,7 @@ import protocol.message.session.SessionInit;
 import protocol.message.session.SessionOk;
 import protocol.message.session.SessionReply;
 import protocol.message.session.SessionRequest;
+import session.client.impl.SessionManager;
 
 /**
  * {@code ISessionClientProtocolHandler} interface describes the client-side

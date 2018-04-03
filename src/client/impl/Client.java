@@ -53,7 +53,7 @@ import protocol.message.session.SessionRequest;
 import session.client.ISessionClientProtocolHandler;
 import session.client.SessionIdentifier;
 import session.client.SessionInfo;
-import session.client.impl.InvalidSessionKeyConnectedSessionClientProtocolHandler;
+import session.client.impl.ConnectedSessionClientProtocolHandler;
 import util.Cheat;
 import util.KeyGenerator;
 import util.SerializerBuffer;
@@ -79,7 +79,7 @@ public class Client extends ACertificationClient implements IClient {
 	@Override
 	public void makeCertificationRequest() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, CertificateEncodingException, KeyStoreException, IOException, NoSuchPaddingException, InvalidKeyException {
 		try {
-			X509CertificateHolder certificationServerCertificate = storer.getCertificate(certificationServerAlias);
+			storer.getCertificate(certificationServerAlias);
 			X509EncodedKeySpec x509spec = new X509EncodedKeySpec(keys.getPublic().getEncoded());
 			BCRSAPublicKey pubKey = (BCRSAPublicKey) KeyFactory.getInstance("RSA", "BC").generatePublic(x509spec);
 			BaseCertificationRequest request = applicant.makeRequest(name, new RSAPublicKeySpec(pubKey.getModulus(), pubKey.getPublicExponent()));
@@ -232,7 +232,7 @@ public class Client extends ACertificationClient implements IClient {
 			addHandler(networkHandlerUDP);
 			
 			certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer, KeyGenerator.bcrsaPublicKeyConverter(certificationServerCertificate));
-			sessionProtocolHandler = new InvalidSessionKeyConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
+			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
 			
 			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.bind(localAddress);

@@ -9,6 +9,8 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
+import certification.BaseCertificationRequest;
+
 /**
  * {@code ICertificationProvider} interface provides a way to build and validate
  * {@link PKCS10CertificationRequest}.<br />
