@@ -108,13 +108,13 @@ public class FileService extends ACertificationClient implements IFileService {
 			networkHandlerUDP = new FileServiceUDPNetworkHandler(datagramChannel, this, privateRSACipher);
 			addHandler(networkHandlerUDP);
 			certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer, KeyGenerator.bcrsaPublicKeyConverter(certificationServerCertificate));
-			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
+			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, sessionManager);
 			
 			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.bind(localAddress);
 			networkHandlerTCP = new FileServiceTCPNetworkHandler(serverSocketChannel, this, privateRSACipher);
 			addHandler(networkHandlerTCP);
-			fileServiceProtocolHandler = new ConnectedFileServiceProtocolHandler(this, storer, fileServiceProvider, sessionManager, networkHandlerTCP);
+			fileServiceProtocolHandler = new ConnectedFileServiceProtocolHandler(this, fileServiceProvider, sessionManager, networkHandlerTCP);
 		} catch (CertificateEncodingException | KeyStoreException | NoSuchElementException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
 			Cheat.LOGGER.log(Level.SEVERE, "Error while starting..", e);
 		}

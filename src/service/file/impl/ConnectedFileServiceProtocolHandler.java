@@ -9,7 +9,6 @@ import java.util.logging.Level;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
-import certification.ICertificationStorer;
 import protocol.NetworkWriter;
 import protocol.message.service.file.ServiceFileReadReply;
 import protocol.message.service.file.ServiceFileReadRequest;
@@ -23,8 +22,8 @@ import util.Cheat;
 
 public class ConnectedFileServiceProtocolHandler extends AFileServiceProtocolHandler {
 	
-	public ConnectedFileServiceProtocolHandler(IFileService service, ICertificationStorer storer, IFileServiceProvider provider, ISessionManager sessionManager, NetworkWriter networkWriter) {
-		super(service, storer, provider, sessionManager, networkWriter);
+	public ConnectedFileServiceProtocolHandler(IFileService service, IFileServiceProvider provider, ISessionManager sessionManager, NetworkWriter networkWriter) {
+		super(service, provider, sessionManager, networkWriter);
 	}
 	
 	@Override

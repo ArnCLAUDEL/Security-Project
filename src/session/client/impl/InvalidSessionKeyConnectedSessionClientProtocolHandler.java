@@ -10,7 +10,6 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-import certification.ICertificationStorer;
 import protocol.NetworkWriter;
 import protocol.Nonce;
 import protocol.message.session.SessionAck;
@@ -23,9 +22,9 @@ import util.KeyGenerator;
 
 public class InvalidSessionKeyConnectedSessionClientProtocolHandler extends ConnectedSessionClientProtocolHandler {
 
-	public InvalidSessionKeyConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer,
+	public InvalidSessionKeyConnectedSessionClientProtocolHandler(NetworkWriter networkWriter,
 			ISessionManager sessionManager) {
-		super(networkWriter, storer, sessionManager);
+		super(networkWriter, sessionManager);
 	}
 	
 	@Override

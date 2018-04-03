@@ -232,7 +232,7 @@ public class Client extends ACertificationClient implements IClient {
 			addHandler(networkHandlerUDP);
 			
 			certificationProtocolHandler = new ConnectedCertificationClientProtocolHandler(networkHandlerUDP, storer, KeyGenerator.bcrsaPublicKeyConverter(certificationServerCertificate));
-			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, storer, sessionManager);
+			sessionProtocolHandler = new ConnectedSessionClientProtocolHandler(networkHandlerUDP, sessionManager);
 			
 			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.bind(localAddress);

@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
-import certification.ICertificationStorer;
 import protocol.NetworkWriter;
 import protocol.Nonce;
 import protocol.message.session.SessionAck;
@@ -20,9 +19,8 @@ import util.Cheat;
 
 public class IncorrectNonceConnectedSessionClientProcolHandler extends ConnectedSessionClientProtocolHandler {
 
-	public IncorrectNonceConnectedSessionClientProcolHandler(NetworkWriter networkWriter, ICertificationStorer storer,
-			ISessionManager sessionManager) {
-		super(networkWriter, storer, sessionManager);
+	public IncorrectNonceConnectedSessionClientProcolHandler(NetworkWriter networkWriter, ISessionManager sessionManager) {
+		super(networkWriter, sessionManager);
 	}
 	
 	@Override

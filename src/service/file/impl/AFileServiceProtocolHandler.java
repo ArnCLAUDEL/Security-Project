@@ -5,7 +5,6 @@ import java.util.logging.Level;
 
 import javax.crypto.Cipher;
 
-import certification.ICertificationStorer;
 import protocol.AbstractProtocolHandler;
 import protocol.NetworkWriter;
 import protocol.message.service.file.ServiceFileReadReply;
@@ -23,14 +22,12 @@ public class AFileServiceProtocolHandler extends AbstractProtocolHandler impleme
 	protected final IFileService service;
 	protected final IFileServiceProvider provider;
 	protected final ISessionManager sessionManager;
-	protected final ICertificationStorer storer;
 	
-	public AFileServiceProtocolHandler(IFileService service, ICertificationStorer storer, IFileServiceProvider provider, ISessionManager sessionManager, NetworkWriter networkWriter) {
+	public AFileServiceProtocolHandler(IFileService service, IFileServiceProvider provider, ISessionManager sessionManager, NetworkWriter networkWriter) {
 		super(networkWriter);
 		this.service = service;
 		this.provider = provider;
 		this.sessionManager = sessionManager;
-		this.storer = storer;
 	}
 	
 	@Override

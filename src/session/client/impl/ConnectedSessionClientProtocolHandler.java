@@ -17,7 +17,6 @@ import javax.crypto.NoSuchPaddingException;
 
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 
-import certification.ICertificationStorer;
 import protocol.NetworkWriter;
 import protocol.Nonce;
 import protocol.message.session.SessionAck;
@@ -35,8 +34,8 @@ public class ConnectedSessionClientProtocolHandler extends ASessionClientProtoco
 		
 	protected final Map<Long, CompletableFuture<SessionIdentifier>> results;
 	
-	public ConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, ISessionManager sessionManager) {
-		super(networkWriter, storer, sessionManager);
+	public ConnectedSessionClientProtocolHandler(NetworkWriter networkWriter, ISessionManager sessionManager) {
+		super(networkWriter, sessionManager);
 		this.results = new HashMap<>();
 	}
 	

@@ -7,7 +7,6 @@ import java.util.logging.Level;
 
 import javax.crypto.Cipher;
 
-import certification.ICertificationStorer;
 import protocol.AbstractProtocolHandler;
 import protocol.NetworkWriter;
 import protocol.message.session.SessionAck;
@@ -22,13 +21,11 @@ import session.client.SessionInfo;
 import util.Cheat;
 
 public abstract class ASessionClientProtocolHandler extends AbstractProtocolHandler implements ISessionClientProtocolHandler {
-
-	protected final ICertificationStorer storer;
+	
 	protected final ISessionManager sessionManager;
 	
-	public ASessionClientProtocolHandler(NetworkWriter networkWriter, ICertificationStorer storer, ISessionManager sessionManager) {
+	public ASessionClientProtocolHandler(NetworkWriter networkWriter, ISessionManager sessionManager) {
 		super(networkWriter);
-		this.storer = storer;
 		this.sessionManager = sessionManager;
 	}
 
